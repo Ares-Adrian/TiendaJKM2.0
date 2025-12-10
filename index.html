@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda de Ropa Deportiva - Créala</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel para JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Lucide React Icons CDN -->
+    <script src="https://unpkg.com/lucide-react@0.303.0/dist/umd/lucide-react.js"></script>
+
+    <!-- jsPDF para generar el PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Configuración personalizada de Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            primary: '#84cc16', // Lime 500
+                            secondary: '#3b82f6', // Blue 500
+                            accent: '#22c55e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* Animaciones suaves */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Estilos para el Personalizador --- */
+        .customizer-container {
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 2rem 1rem;
+        }
+        .customizer-grid-2 { display: grid; grid-template-columns: 1fr; gap: 3rem; }
+        @media (min-width: 1024px) {
+            .customizer-grid-2 { grid-template-columns: 1.5fr 1fr; }
+        }
+        .text-limestone { color: #a3e635; }
+
+        .viewer-sticky {
+            position: sticky;
+            top: 8rem; /* Ajustado para el navbar fijo */
+        }
+        .viewer-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            height: 550px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid rgba(45, 53, 67, 0.5);
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        .grid-background {
+            position: absolute;
+            inset: 0;
+            opacity: 0.03;
+            background-image: radial-gradient(circle, #f8fafc 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .svg-viewer {
+            width: 100%;
+            max-width: 400px;
+            z-index: 10;
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+            transition: all 0.5s ease-in-out;
+        }
+        .svg-viewer svg:hover { transform: scale(1.05); }
+
+        .controls-title {
+            font-size: 3rem;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -0.05em;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #f8fafc, #94a3b8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1;
+        }
+
+        .item-selector {
+            display: flex;
+            padding: 4px;
+            background-color: rgba(15, 23, 42, 0.5);
+            border-radius: 0.75rem;
+            border: 1px solid #1e293b;
+        }
+        .item-selector button {
+            flex: 1;
+            padding: 1rem 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s;
+            color: #94a3b8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .item-selector button:hover {
+            color: #f8fafc;
+            background-color: #1e293b;
+        }
+        .item-selector button.selected {
+            background-color: #a3e635;
+            color: #020617;
+            box-shadow: 0 10px 15px rgba(163, 230, 53, 0.2);
+        }
+
+        .text-input {
+            width: 100%;
+            background-color: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            outline: none;
+            transition: all 0.3s;
+            color: #f8fafc;
+        }
+        .text-input:focus {
+            border-color: #a3e635;
+            box-shadow: 0 0 20px rgba(163, 230, 53, 0.2);
+        }
+
+        .color-selector {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.75rem;
+        }
+        .color-selector button {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            overflow: hidden;
+            padding: 0;
+        }
+        .color-selector button .color-swatch {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .color-selector button .color-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top right, rgba(0,0,0,0.2), rgba(255,255,255,0.2));
+        }
+        .color-selector button:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+        .color-selector button.selected {
+            transform: scale(1.1);
+            outline: 2px solid #a3e635;
+            outline-offset: 4px;
+            box-shadow: 0 0 15px rgba(163, 230, 53, 0.5);
+        }
+        .color-check {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        .action-button {
+            width: 100%;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .add-to-cart-custom-button {
+            background-color: #a3e635;
+            color: #020617;
+            box-shadow: 0 0 30px rgba(163, 230, 53, 0.3);
+        }
+        .add-to-cart-custom-button:hover {
+            background-color: #84cc16;
+            box-shadow: 0 0 50px rgba(163, 230, 53, 0.5);
+        }
+        .download-pdf-button {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border: 2px solid #334155;
+        }
+        .download-pdf-button:hover {
+            background-color: #334155;
+        }
+        .action-button:active {
+            transform: scale(0.98);
+        }
+        
+        .customizer-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .customizer-icon-small {
+            width: 0.75rem;
+            height: 0.75rem;
+        }
+        .customizer-icon-large {
+            width: 2rem;
+            height: 2rem;
+        }
+        .check-icon-large {
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid #020617;
+            border-radius: 50%;
+            padding: 2px;
+        }
+
+        @media (max-width: 1023px) {
+            .viewer-sticky {
+                position: relative;
+                top: auto;
+            }
+            .viewer-card {
+                height: 400px;
+                padding: 1rem;
+            }
+            .controls-title {
+                font-size: 2.5rem;
+            }
+        }
+        /* --- Fin Estilos Personalizador --- */
+
+        /* --- Estilos para el Chatbot --- */
+        .chatbot-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 1000;
+        }
+        .chatbot-toggle-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--color-accent);
+            color: var(--color-dark-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(163, 230, 53, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .chatbot-toggle-button:hover {
+            transform: scale(1.1);
+        }
+        .chatbot-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 350px;
+            height: 500px;
+            background-color: var(--color-dark-card);
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border: 1px solid var(--color-dark-surface);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chatbot-header {
+            padding: 1rem;
+            background-color: var(--color-dark-surface);
+        }
+        .chatbot-iframe { width: 100%; height: 100%; border: none; }
+    /* ---------------------------------------------------- */
+    /* 1. VARIABLES Y ESTILOS BASE */
+    /* ---------------------------------------------------- */
+    :root {
+      --color-dark-primary: #0f172a; /* slate-900 */
+      --color-dark-card: #1e293b;    /* slate-800 */
+      --color-dark-surface: #334155; /* slate-700 */
+      --color-accent: #a3e635;      /* lime-400 */
+      --color-success: #16a34a;     /* green-600 */
+      --color-text-light: #f1f5f9;  /* slate-100 */
+      --color-text-muted: #94a3b8;  /* slate-400 */
+      --color-error: #ef4444;       /* red-500 */
+      --radius-lg: 1.5rem;
+      --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Nota: el body ya tiene estilos en el CSS existente, no duplicar */
+
+    /* ---------------------------------------------------- */
+    /* 2. CARD CONTAINER */
+    /* ---------------------------------------------------- */
+    .card {
+      position: relative;
+      width: 100%;
+      max-width: 384px; /* max-w-sm */
+      background-color: var(--color-dark-card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-2xl);
+      overflow: hidden;
+      border: 1px solid var(--color-dark-surface);
+      transition: all 0.5s;
+    }
+
+    .card:hover {
+      box-shadow: 0 0 20px rgba(163, 230, 53, 0.2);
+    }
+
+    .card-blob {
+      position: absolute;
+      top: 0;
+      right: 0;
+      margin-right: -4rem; /* -mr-16 */
+      margin-top: -4rem; /* -mt-16 */
+      width: 16rem; /* w-64 */
+      height: 16rem; /* h-64 */
+      background-color: var(--color-accent);
+      border-radius: 9999px;
+      filter: blur(3rem); /* blur-3xl */
+      opacity: 0.1;
+      transition: opacity 0.7s;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .card:hover .card-blob {
+      opacity: 0.2;
+    }
+
+    /* ---------------------------------------------------- */
+    /* 3. IMAGEN Y CABECERA */
+    /* ---------------------------------------------------- */
+    .image-section {
+      position: relative;
+      height: 16rem; /* h-64 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--color-dark-surface), var(--color-dark-card));
+    }
+
+    .product-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      transform: scale(1);
+      transition: transform 0.5s;
+    }
+    
+    .card:hover .product-image {
+      transform: scale(1.1) rotate(-2deg);
+    }
+
+    .image-overlay {
+      position: absolute;
+      inset: 0;
+      background-color: var(--color-accent);
+      filter: blur(3rem);
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    .card:hover .image-overlay {
+      opacity: 0.1;
+    }
+
+    /* Badge de Nuevo */
+    .badge {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background-color: var(--color-accent);
+      color: var(--color-dark-primary);
+      font-size: 0.75rem; /* text-xs */
+      font-weight: bold;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      box-shadow: 0 10px 15px -3px rgba(163, 230, 53, 0.2), 0 4px 6px -4px rgba(163, 230, 53, 0.2);
+      z-index: 20;
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Botón de Favorito */
+    .favorite-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.5rem;
+      border-radius: 9999px;
+      background-color: rgba(15, 23, 42, 0.5); /* slate-900/50 */
+      backdrop-filter: blur(4px); /* backdrop-blur-sm */
+      transition: background-color 0.3s;
+      z-index: 20;
+      border: none;
+      cursor: pointer;
+    }
+
+    .favorite-btn:hover {
+      background-color: var(--color-dark-primary); /* slate-900 */
+    }
+
+    .heart-icon {
+      width: 1.25rem; /* w-5 */
+      height: 1.25rem; /* h-5 */
+      transition: all 0.3s;
+      stroke: var(--color-text-muted);
+    }
+    
+    .favorite-btn:hover .heart-icon {
+        stroke: var(--color-text-light);
+    }
+
+    .is-favorite .heart-icon {
+      fill: var(--color-error);
+      stroke: var(--color-error);
+      transform: scale(1.1);
+    }
+
+    /* ---------------------------------------------------- */
+    /* 4. CONTENIDO INTERACTIVO */
+    /* ---------------------------------------------------- */
+    .content-wrapper {
+      padding: 1.5rem;
+      position: relative;
+      z-index: 20;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+
+    .product-title {
+      font-size: 1.5rem; /* text-2xl */
+      font-weight: 900; /* black */
+      line-height: 1.25;
+      margin-bottom: 0.25rem;
+    }
+
+    .product-subtitle {
+      color: var(--color-text-muted);
+      font-size: 0.875rem; /* text-sm */
+    }
+
+    .price-display {
+      font-size: 1.5rem; /* text-2xl */
+      font-weight: 900;
+      color: var(--color-accent);
+      letter-spacing: -0.05em; /* tracking-tighter */
+      text-shadow: 0 0 8px rgba(163, 230, 53, 0.5);
+    }
+
+    /* Selector de Talla */
+    .size-selector {
+      margin-bottom: 1.5rem;
+    }
+
+    .size-label {
+      font-size: 0.75rem; /* text-xs */
+      font-weight: bold;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em; /* tracking-wider */
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .size-buttons-container {
+      display: flex;
+      gap: 0.75rem; /* gap-3 */
+    }
+
+    .size-button {
+      height: 2.5rem; /* h-10 */
+      width: 2.5rem; /* w-10 */
+      border-radius: 0.75rem; /* rounded-xl */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.875rem; /* text-sm */
+      transition: all 0.3s;
+      transform: scale(1);
+      cursor: pointer;
+      background-color: var(--color-dark-surface);
+      color: var(--color-text-muted);
+      border: none;
+    }
+
+    .size-button:hover {
+      background-color: #475569; /* slate-600 */
+      transform: scale(1.05);
+      color: var(--color-text-light);
+    }
+
+    .size-button.active {
+      background: linear-gradient(to bottom right, var(--color-accent), var(--color-success));
+      color: var(--color-dark-primary);
+      box-shadow: 0 10px 15px -3px rgba(163, 230, 53, 0.3);
+      transform: scale(1.1);
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    /* ---------------------------------------------------- */
+    /* 5. SELECTOR DE CANTIDAD Y BOTÓN DE ACCIÓN */
+    /* ---------------------------------------------------- */
+    .action-group {
+      display: flex;
+      gap: 1rem;
+      align-items: stretch;
+      height: 3.5rem; /* h-14 */
+    }
+
+    .quantity-input {
+      display: flex;
+      align-items: center;
+      background-color: rgba(30, 41, 59, 0.5); /* slate-700/50 */
+      border-radius: 1rem;
+      padding: 0.25rem;
+      border: 1px solid var(--color-dark-surface);
+      width: 33.3333%; /* w-1/3 */
+      min-width: 100px;
+      justify-content: space-between;
+    }
+
+    .qty-button {
+      width: 2rem; /* w-8 */
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-text-muted);
+      background: none;
+      border: none;
+      border-radius: 0.75rem;
+      transition: background-color 0.3s, color 0.3s;
+      cursor: pointer;
+    }
+
+    .qty-button:hover:not(:disabled) {
+      color: var(--color-text-light);
+      background-color: #475569; /* slate-600 */
+    }
+
+    .qty-button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .quantity-display {
+      font-weight: bold;
+      font-size: 1.125rem; /* text-lg */
+      width: 1.5rem;
+      text-align: center;
+    }
+
+    /* Botón Agregar al Carrito */
+    .add-to-cart-btn {
+      flex: 1;
+      border-radius: 1rem;
+      font-weight: bold;
+      font-size: 1rem;
+      transition: all 0.5s;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+
+      /* Estado Normal */
+      background-color: var(--color-text-light);
+      color: var(--color-dark-primary);
+      box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1);
+    }
+
+    .add-to-cart-btn:hover:not(:disabled) {
+      background-color: var(--color-accent);
+      box-shadow: 0 10px 15px -3px rgba(163, 230, 53, 0.2);
+      transform: scale(0.99);
+    }
+    
+    .add-to-cart-btn:active:not(:disabled) {
+        transform: scale(0.95);
+    }
+
+    .button-content {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Estado de Carga (Loading) */
+    .is-adding {
+        background-color: var(--color-text-light);
+        color: var(--color-dark-primary);
+        cursor: default;
+    }
+
+    .loading-bar {
+      position: absolute;
+      inset: 0;
+      background-color: #e2e8f0; /* slate-200 */
+      display: none;
+    }
+    .is-adding .loading-bar {
+        display: block;
+    }
+
+    .loading-bar div {
+      height: 100%;
+      background-color: var(--color-accent);
+      width: 100%;
+      transform-origin: left;
+      transform: scaleX(0);
+    }
+    
+    .animate-progress {
+      animation: progress 1.5s ease-in-out infinite;
+    }
+
+    @keyframes progress {
+      0% { transform: scaleX(0); }
+      50% { transform: scaleX(0.7); }
+      100% { transform: scaleX(1); }
+    }
+    
+    /* Estado de Éxito (Added) */
+    .is-added {
+      background-color: var(--color-success);
+      color: var(--color-text-light);
+      cursor: default;
+      box-shadow: 0 10px 15px -3px rgba(22, 163, 74, 0.3);
+    }
+
+    .is-added .button-content .success-check-icon {
+        background-color: var(--color-text-light);
+        color: var(--color-success);
+        border-radius: 9999px;
+        padding: 0.125rem;
+        animation: bounce-check 0.5s ease-in-out 3;
+    }
+    
+    @keyframes bounce-check {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+    }
+
+        /* Base y Tipografía */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        /* body se define más arriba, no duplicar */
+
+        /* Utilidades y Comunes */
+        .container {
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 2rem 1rem;
+        }
+        .flex-row { display: flex; align-items: center; }
+        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 3rem; }
+        @media (min-width: 1024px) {
+            .grid-2 { grid-template-columns: 1.5fr 1fr; }
+        }
+        .text-limestone { color: #a3e635; } /* lime-400 */
+        .bg-limestone { background-color: #a3e635; } /* lime-400 */
+        .text-dark { color: #020617; } /* slate-950 */
+
+        /* Navbar */
+        #navbar {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(15, 23, 42, 0.9); /* slate-900/90 */
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            border-bottom: 1px solid #1e293b; /* slate-800 */
+        }
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -0.05em;
+            text-shadow: 2px 2px 0px rgba(163, 230, 53, 0.5);
+        }
+        #cart-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            transition: background-color 0.3s;
+            position: relative;
+        }
+        #cart-button:hover { background-color: #1e293b; }
+        #cart-count {
+            position: absolute;
+            top: -0.25rem;
+            right: -0.25rem;
+            background-color: #a3e635;
+            color: #020617;
+            font-size: 0.75rem;
+            font-weight: bold;
+            width: 1.25rem;
+            height: 1.25rem;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            box-shadow: 0 4px 6px rgba(163, 230, 53, 0.3);
+        }
+
+        /* Visualizador (Columna Izquierda) */
+        .viewer-sticky {
+            position: sticky;
+            top: 6rem; /* debajo del navbar */
+        }
+        .viewer-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a); /* gradiente de slate-800 a slate-900 */
+            border-radius: 1.5rem;
+            padding: 2rem;
+            height: 550px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid rgba(45, 53, 67, 0.5);
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        .grid-background {
+            position: absolute;
+            inset: 0;
+            opacity: 0.03;
+            background-image: radial-gradient(circle, #f8fafc 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        #svg-viewer {
+            width: 100%;
+            max-width: 400px;
+            z-index: 10;
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+            transition: all 0.5s ease-in-out;
+        }
+        #svg-viewer svg:hover { transform: scale(1.05); }
+
+        /* Controles (Columna Derecha) */
+        .controls-title {
+            font-size: 3rem;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -0.05em;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #f8fafc, #94a3b8); /* white a slate-400 */
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1;
+        }
+
+        /* Selector de Prenda (Tabs) */
+        #item-selector {
+            display: flex;
+            padding: 4px;
+            background-color: rgba(15, 23, 42, 0.5); /* slate-900/50 */
+            border-radius: 0.75rem;
+            border: 1px solid #1e293b;
+        }
+        #item-selector button {
+            flex: 1;
+            padding: 1rem 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s;
+            color: #94a3b8; /* slate-400 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        #item-selector button:hover {
+            color: #f8fafc;
+            background-color: #1e293b;
+        }
+        #item-selector button.selected {
+            background-color: #a3e635;
+            color: #020617;
+            box-shadow: 0 10px 15px rgba(163, 230, 53, 0.2);
+        }
+
+        /* Input de Texto */
+        #text-input {
+            width: 100%;
+            background-color: #0f172a; /* slate-900 */
+            border: 2px solid #334155; /* slate-700 */
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            outline: none;
+            transition: all 0.3s;
+            color: #f8fafc;
+        }
+        #text-input:focus {
+            border-color: #a3e635;
+            box-shadow: 0 0 20px rgba(163, 230, 53, 0.2);
+        }
+
+        /* Selector de Color */
+        #color-selector {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.75rem;
+        }
+        #color-selector button {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            overflow: hidden;
+            padding: 0;
+        }
+        #color-selector button .color-swatch {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #color-selector button .color-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top right, rgba(0,0,0,0.2), rgba(255,255,255,0.2));
+        }
+        #color-selector button:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+        #color-selector button.selected {
+            transform: scale(1.1);
+            outline: 2px solid #a3e635;
+            outline-offset: 4px;
+            box-shadow: 0 0 15px rgba(163, 230, 53, 0.5);
+        }
+        .color-check {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        /* Botón de Compra */
+        #add-to-cart-button {
+            width: 100%;
+            background-color: #a3e635;
+            color: #020617;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            box-shadow: 0 0 30px rgba(163, 230, 53, 0.3);
+            margin-top: 2rem;
+        }
+        #add-to-cart-button:hover {
+            background-color: #84cc16; /* lime-500 */
+            box-shadow: 0 0 50px rgba(163, 230, 53, 0.5);
+        }
+        #add-to-cart-button:active {
+            transform: scale(0.98);
+        }
+        
+        /* Iconos (SVG base) */
+        .icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .icon-small {
+            width: 0.75rem;
+            height: 0.75rem;
+        }
+        .icon-large {
+            width: 2rem;
+            height: 2rem;
+        }
+        .check-icon-large {
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid #020617;
+            border-radius: 50%;
+            padding: 2px;
+        }
+
+        /* Responsividad Móvil */
+        @media (max-width: 1023px) {
+            .viewer-sticky {
+                position: relative;
+                top: auto;
+            }
+            .viewer-card {
+                height: 400px;
+                padding: 1rem;
+            }
+            .controls-title {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- DATOS ---
+        const PRODUCTS = [
+            { id: 1, name: "Pelota de fútbol", price: 20.00, img: "Pelota.jpeg", category: "Accesorios" },
+            { id: 2, name: "Polera Deportiva Premium", price: 35.00, img: "Polera deportiva Premium.jpeg", category: "Ropa" },
+            { id: 3, name: "Shorts Deportivos Premium", price: 25.00, img: "Shorts Deportivos Premium.jpeg", category: "Ropa" },
+            { id: 4, name: "Canillera Deportiva Premium", price: 25.00, img: "Canillera deportiva Premium.jpeg", category: "Accesorios" },
+            { id: 5, name: "Chaqueta Deportiva Premium", price: 40.00, img: "Chaqueta Deportiva Premium.jpeg", category: "Ropa" },
+        ];
+
+        // --- COMPONENTES ---
+
+        // 1. Notificación Toast
+        const Toast = ({ message, onClose }) => {
+            useEffect(() => {
+                const timer = setTimeout(onClose, 3000);
+                return () => clearTimeout(timer);
+            }, [onClose]);
+
+            return (
+                <div className="fixed bottom-4 right-4 bg-brand-primary text-black font-bold px-6 py-3 rounded-lg shadow-lg z-50 fade-in flex items-center gap-2">
+                    <i className="fa-solid fa-check-circle"></i> {message}
+                </div>
+            );
+        };
+
+        // 2. Navegación
+        const Navbar = ({ setView, cartCount, user, logout }) => (
+            <nav className="fixed top-0 w-full z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-700 shadow-lg">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-16">
+                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
+                            <i className="fa-solid fa-bolt text-brand-primary text-2xl"></i>
+                            <span className="font-extrabold text-xl tracking-tighter">TIENDA <span className="text-brand-primary">DEPORTIVA</span></span>
+                        </div>
+                        <div className="hidden md:block">
+                            <div className="ml-10 flex items-baseline space-x-4">
+                                <button onClick={() => setView('home')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Inicio</button>
+                                <button onClick={() => setView('catalog')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Catálogo</button>
+                                <button onClick={() => setView('customize')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Personalizar</button>
+                                <button onClick={() => setView('contact')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Contacto</button>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setView('cart')} className="relative group p-2">
+                                <i className="fa-solid fa-cart-shopping text-xl group-hover:text-brand-primary transition"></i>
+                                {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{cartCount}</span>}
+                            </button>
+                            {user ? (
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => setView('profile')} className="flex items-center gap-2 hover:bg-slate-800 px-3 py-1 rounded-full transition">
+                                        <div className="bg-brand-secondary h-8 w-8 rounded-full flex items-center justify-center font-bold">{user.username.charAt(0).toUpperCase()}</div>
+                                        <span className="text-sm font-medium hidden sm:block">{user.username}</span>
+                                    </button>
+                                    <button onClick={logout} className="text-slate-400 hover:text-white text-sm"><i className="fa-solid fa-right-from-bracket"></i></button>
+                                </div>
+                            ) : (
+                                <button onClick={() => setView('auth')} className="bg-brand-primary hover:bg-lime-600 text-black px-4 py-2 rounded-full font-bold text-sm transition shadow-lg shadow-lime-500/20">
+                                    Ingresar
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                {/* Mobile Menu (Simplified) */}
+                <div className="md:hidden flex justify-around py-3 bg-slate-900/95 backdrop-blur-sm text-xs border-t border-slate-700">
+                    <button onClick={() => setView('home')} className="flex flex-col items-center gap-1 text-slate-300"><i className="fa-solid fa-house text-lg"></i>Inicio</button>
+                    <button onClick={() => setView('catalog')} className="flex flex-col items-center gap-1 text-slate-300"><i className="fa-solid fa-bag-shopping text-lg"></i>Catálogo</button>
+                    <button onClick={() => setView('customize')} className="flex flex-col items-center gap-1 text-slate-300"><i className="fa-solid fa-pen-ruler text-lg"></i>Crear</button>
+                    <button onClick={() => setView('cart')} className="flex flex-col items-center gap-1 relative text-slate-300"><i className="fa-solid fa-cart-shopping text-lg"></i>Carrito {cartCount > 0 && <span className="absolute -top-1 right-2 bg-red-500 text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">{cartCount}</span>}</button>
+                </div>
+            </nav>
+        );
+
+        // 3. Vista Inicio
+        const Home = ({ setView }) => (
+            <div className="fade-in pt-16">
+                <div className="relative bg-slate-900 overflow-hidden">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="relative z-10 pb-8 bg-slate-900 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
+                            <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+                                <div className="sm:text-center lg:text-left">
+                                    <div className="inline-block bg-fuchsia-500/20 text-fuchsia-500 font-bold px-3 py-1 rounded-full text-sm mb-4">
+                                        ¡OFERTAS DE TEMPORADA! -30% OFF
+                                    </div>
+                                    <h1 className="text-3xl tracking-tight font-extrabold text-white sm:text-5xl md:text-6xl">
+                                        <span className="block xl:inline">No sigas la jugada,</span>{' '}
+                                        <span className="block text-brand-primary xl:inline">¡CRÉALA!</span>
+                                    </h1>
+                                    <p className="mt-3 text-base text-gray-400 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                                        Equípate con lo mejor. Ropa deportiva premium diseñada para el rendimiento, el estilo y la victoria.
+                                    </p>
+                                    <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                                        <div className="rounded-md shadow">
+                                            <button onClick={() => setView('catalog')} className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-black bg-brand-primary hover:bg-lime-600 md:py-4 md:text-lg transition">
+                                                Ver Catálogo
+                                            </button>
+                                        </div>
+                                        <div className="mt-3 sm:mt-0 sm:ml-3">
+                                            <button onClick={() => setView('customize')} className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-brand-primary bg-slate-800 hover:bg-slate-700 md:py-4 md:text-lg transition">
+                                                Personalizar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </main>
+                        </div>
+                    </div>
+                    <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+                        <img className="h-full w-full object-cover" src="Imagenes/Huascaran.jpeg" alt="Paisaje Huascaran" />
+                    </div>
+                </div>
+            </div>
+        );
+
+        // 4. Vista Catálogo
+        const Catalog = ({ addToCart }) => (
+            <div className="pt-24 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 fade-in">
+                <h2 className="text-3xl font-extrabold text-white mb-8 border-l-4 border-brand-primary pl-4">Nuestros Productos</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {PRODUCTS.map(product => (
+                        <InteractiveProductCard key={product.id} product={product} addToCart={addToCart} />
+                    ))}
+                </div>
+            </div>
+        );
+
+        // Componente de Tarjeta de Producto Interactiva
+        const InteractiveProductCard = ({ product, addToCart }) => {
+            const [state, setState] = useState({
+                size: 'M',
+                quantity: 1,
+                isAdding: false,
+                isAdded: false,
+                isFavorite: false,
+            });
+
+            const BASE_PRICE = product.price; // Usar el precio del producto
+            const SIZES = ['S', 'M', 'L', 'XL']; // Suponiendo que todos los productos tienen estas tallas
+
+            // Efecto para actualizar el botón de añadir al carrito y el precio en el texto
+            useEffect(() => {
+                // Actualizar el texto del botón al cambiar cantidad
+                if (!state.isAdding && !state.isAdded) {
+                    const totalPrice = (BASE_PRICE * state.quantity).toFixed(2);
+                    // Esto se maneja directamente en el JSX ahora
+                }
+            }, [state.quantity, state.isAdding, state.isAdded]);
+
+            const handleFavoriteToggle = () => {
+                setState(prevState => ({ ...prevState, isFavorite: !prevState.isFavorite }));
+            };
+
+            const handleQuantityChange = (delta) => {
+                setState(prevState => {
+                    const newQuantity = Math.max(1, prevState.quantity + delta);
+                    return { ...prevState, quantity: newQuantity };
+                });
+            };
+
+            const handleSizeChange = (newSize) => {
+                setState(prevState => ({ ...prevState, size: newSize }));
+            };
+
+            const handleAddToCart = () => {
+                if (state.isAdding || state.isAdded) return;
+
+                setState(prevState => ({ ...prevState, isAdding: true }));
+
+                setTimeout(() => {
+                    setState(prevState => ({ ...prevState, isAdding: false, isAdded: true }));
+                    addToCart({ ...product, quantity: state.quantity, size: state.size }); // Llamar a la función addToCart del App component
+
+                    setTimeout(() => {
+                        setState(prevState => ({ ...prevState, isAdded: false, quantity: 1 })); // Resetear después de unos segundos
+                    }, 2500);
+                }, 1500);
+            };
+
+            const totalPrice = (BASE_PRICE * state.quantity).toFixed(2);
+
+            return (
+                <div className="card">
+                    <div className="card-blob"></div>
+
+                    <div className="image-section">
+                        <img
+                            src={`Imagenes/${product.img}`}
+                            alt={product.name}
+                            className="product-image"
+                            onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/333333/ffffff?text=Error+Carga+Imagen'; }}
+                        />
+                        <div className="image-overlay"></div>
+
+                        <div className="badge">
+                            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-slate-900" style={{ width: '0.75rem', height: '0.75rem' }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                            NUEVO DROP
+                        </div>
+
+                        <button
+                            onClick={handleFavoriteToggle}
+                            className={`favorite-btn ${state.isFavorite ? 'is-favorite' : ''}`}
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="heart-icon"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" /></svg>
+                        </button>
+                    </div>
+
+                    <div className="content-wrapper">
+                        <div className="header-content">
+                            <div>
+                                <h2 className="product-title">{product.name.replace(/Deportiva/g, '').replace(/\s\s+/g, ' ').trim()}</h2>
+                                <p className="product-subtitle">{product.category}</p>
+                            </div>
+                            <div className="text-right">
+                                <div className="price-display">
+                                    S/ {totalPrice}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="size-selector">
+                            <label className="size-label">Selecciona tu Talla</label>
+                            <div className="size-buttons-container">
+                                {SIZES.map(s => (
+                                    <button
+                                        key={s}
+                                        className={`size-button ${state.size === s ? 'active' : ''}`}
+                                        onClick={() => handleSizeChange(s)}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="action-group">
+                            <div className="quantity-input">
+                                <button onClick={() => handleQuantityChange(-1)} className="qty-button" disabled={state.quantity <= 1}>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1rem', height: '1rem' }}><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                </button>
+                                <span className="quantity-display">{state.quantity}</span>
+                                <button onClick={() => handleQuantityChange(1)} className="qty-button">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1rem', height: '1rem' }}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                </button>
+                            </div>
+
+                            <button onClick={handleAddToCart} className={`add-to-cart-btn ${state.isAdding ? 'is-adding' : ''} ${state.isAdded ? 'is-added' : ''}`} disabled={state.isAdding || state.isAdded}>
+                                <div className="button-content">
+                                    {state.isAdding && <span style={{ animation: 'pulse 1s infinite' }}>Procesando...</span>}
+                                    {state.isAdded && (
+                                        <>
+                                            <div className="success-check-icon">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1rem', height: '1rem' }}><polyline points="20 6 9 17 4 12" /></svg>
+                                            </div>
+                                            <span>¡Añadido!</span>
+                                        </>
+                                    )}
+                                    {!state.isAdding && !state.isAdded && (
+                                        <>
+                                            <span>Agregar S/ {totalPrice}</span>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.125rem', height: '1.125rem' }}><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6zM3 6h18M16 10a4 4 0 00-8 0" /></svg>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="loading-bar">
+                                    <div className={state.isAdding ? 'animate-progress' : ''}></div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 5. Vista Personalización (Customize)
+        const Customize = ({ addToCart }) => {
+            const { jsPDF } = window.jspdf;
+            const svgViewerRef = useRef(null);
+
+            // Definimos las tallas disponibles para los productos de ropa
+            const SIZES = ['S', 'M', 'L', 'XL'];
+
+            const initialCustomizations = {
+                polo: { text: 'TU MARCA', color: 'bg-slate-900', name: 'Polera Deportiva Premium', price: PRODUCTS.find(p => p.id === 2)?.price || 35.00 },
+                short: { text: 'SPORT', color: 'bg-gray-100', name: 'Shorts Deportivos Premium', price: PRODUCTS.find(p => p.id === 3)?.price || 25.00 },
+                jacket: { text: 'CAMPEÓN', color: 'bg-red-600', name: 'Chaqueta Deportiva Premium', price: PRODUCTS.find(p => p.id === 5)?.price || 40.00 }
+            };
+
+            const items = {
+                polo: { name: 'Chaqueta', iconName: 'TrendingUp' },
+                short: { name: 'Shorts', iconName: 'Zap' },
+                jacket: { name: 'Polera', iconName: 'Trophy' }
+            };
+
+            const colors = [
+                { name: 'Midnight', class: 'bg-slate-900', hex: '#0f172a' },
+                { name: 'Fuego', class: 'bg-red-600', hex: '#dc2626' },
+                { name: 'Nieve', class: 'bg-gray-100', hex: '#f3f4f6' },
+                { name: 'Océano', class: 'bg-blue-600', hex: '#2563eb' },
+                { name: 'Carbón', class: 'bg-zinc-800', hex: '#27272a' },
+                { name: 'Lima', class: 'bg-lime-400', hex: '#a3e635' },
+            ];
+
+            const [selectedItem, setSelectedItem] = useState('polo');
+            const [customizations, setCustomizations] = useState(initialCustomizations);
+            const [size, setSize] = useState('M');
+            const [isAdding, setIsAdding] = useState(false); // Estado para la animación del botón
+            const [isAdded, setIsAdded] = useState(false);   // Estado para la animación del botón
+
+            const currentConfig = customizations[selectedItem];
+
+            const iconPathMap = {
+                ShoppingBag: '<path d="M6 2L3 7v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-3-5z"/><path d="M3 7h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+                RefreshCcw: '<path d="M23 11v-3h-3"/><path d="M1v13h3"/><path d="M20.9 14.1a10 10 0 0 0-19.8 0"/><path d="M3.1 9.9A10 10 0 0 1 23 14.1"/>',
+                Check: '<path d="M20 6 9 17l-5-5"/>',
+                Zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+                Trophy: '<path d="M6 9H4V2h2"/><path d="M18 9h2V2h-2"/><path d="M12 13V2"/><path d="M5 2c12-3 20 5 20 15v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-4c0-10 8-18 20-15z"/>',
+                TrendingUp: '<polyline points="12 17 17 12 21 16"/><line x1="2" y1="21" x2="21" y2="21"/><path d="M17 12h4v4"/>',
+                Layers: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+                Download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'
+            };
+
+            const getIconSVG = (name, classes = "") => {
+                const paths = iconPathMap[name] || '';
+                return `<svg class="customizer-icon ${classes}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+            };
+
+            const getColorHex = (cls) => colors.find(c => c.class === cls)?.hex || '#27272a';
+            const getColorName = (cls) => colors.find(c => c.class === cls)?.name || 'Desconocido';
+
+            const generatePoloSVG = (config) => {
+                const fill = getColorHex(config.color);
+                const isLight = config.color === 'bg-gray-100' || config.color === 'bg-lime-400';
+                const textFill = isLight ? '#1a1a1a' : '#ffffff';
+                return `<svg viewBox="0 0 400 400" class="w-full h-full drop-shadow-2xl transition-all duration-500 transform hover:scale-105"><defs><filter id="fabricPolo"><feGaussianBlur in="SourceAlpha" stdDeviation="2" /><feOffset dx="0" dy="4" result="offsetblur" /><feComponentTransfer><feFuncA type="linear" slope="0.2" /></feComponentTransfer><feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge></filter><linearGradient id="poloGradient" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="white" stop-opacity="0.1" /><stop offset="100%" stop-color="black" stop-opacity="0.1" /></linearGradient></defs><path d="M120,60 C120,60 150,85 200,85 C250,85 280,60 280,60 L330,110 L310,140 L280,120 L280,320 L120,320 L120,120 L90,140 L70,110 Z" fill="${fill}" filter="url(#fabricPolo)" stroke="rgba(0,0,0,0.1)" stroke-width="1"/><path d="M120,60 C120,60 150,85 200,85 C250,85 280,60 280,60 L330,110 L310,140 L280,120 L280,320 L120,320 L120,120 L90,140 L70,110 Z" fill="url(#poloGradient)" style="mix-blend-mode: multiply;" /><path d="M140,65 Q200,105 260,65" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="3" /><path d="M140,65 Q200,105 260,65" fill="none" stroke="${fill}" stroke-width="15" stroke-linecap="round" opacity="0.1" /><g transform="translate(125, 140)"><rect x="-5" y="-15" width="50" height="2" fill="${textFill}" opacity="0.5" /><rect x="-5" y="-10" width="30" height="2" fill="${textFill}" opacity="0.3" /><text x="0" y="0" text-anchor="start" fill="${textFill}" font-family="Arial, sans-serif" font-weight="900" font-size="14" letter-spacing="-0.5" style="text-shadow: 0px 1px 2px rgba(0,0,0,0.3);">${config.text.toUpperCase()}</text></g></svg>`;
+            };
+
+            const generateJacketSVG = (config) => {
+                const fill = getColorHex(config.color);
+                const isLight = config.color === 'bg-gray-100' || config.color === 'bg-lime-400';
+                const textFill = isLight ? '#1a1a1a' : '#ffffff';
+                const zipperColor = isLight ? '#333' : '#111';
+                return `<svg viewBox="0 0 400 400" class="w-full h-full drop-shadow-2xl transition-all duration-500 transform hover:scale-105"><defs><filter id="fabricJacket"><feGaussianBlur in="SourceAlpha" stdDeviation="3" /><feOffset dx="2" dy="5" result="offsetblur" /><feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs><path d="M145,50 L145,80 L255,80 L255,50 Q200,60 145,50 Z" fill="${fill}" stroke="rgba(0,0,0,0.2)" /><path d="M145,50 Q200,60 255,50" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="2" /><path d="M145,80 L80,100 L70,260 L100,270 L110,130 L110,340 L290,340 L290,130 L300,270 L330,260 L320,100 L255,80 Z" fill="${fill}" filter="url(#fabricJacket)"/><path d="M145,80 L110,180 M255,80 L290,180" stroke="rgba(0,0,0,0.15)" stroke-width="2" /><rect x="198" y="50" width="4" height="290" fill="${zipperColor}" /><path d="M130,250 L130,290" stroke="rgba(0,0,0,0.2)" stroke-width="3" stroke-linecap="round" /><path d="M270,250 L270,290" stroke="rgba(0,0,0,0.2)" stroke-width="3" stroke-linecap="round" /><path d="M70,260 L100,270 L105,255 L75,245 Z" fill="#111" /><path d="M330,260 L300,270 L295,255 L325,245 Z" fill="#111" /><g transform="translate(130, 150)"><path d="M0,0 L20,0 L15,10 L-5,10 Z" fill="${textFill}" opacity="0.8" /><text x="5" y="30" text-anchor="middle" fill="${textFill}" font-family="Impact, sans-serif" font-weight="900" font-size="14" letter-spacing="1" style="filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));">${config.text.toUpperCase()}</text></g></svg>`;
+            };
+
+            const generateShortSVG = (config) => {
+                const fill = getColorHex(config.color);
+                const isLight = config.color === 'bg-gray-100' || config.color === 'bg-lime-400';
+                const textFill = isLight ? '#1a1a1a' : '#ffffff';
+                return `<svg viewBox="0 0 400 400" class="w-full h-full drop-shadow-2xl transition-all duration-500 transform hover:scale-105"><defs><filter id="fabricShort"><feGaussianBlur in="SourceAlpha" stdDeviation="2" /><feOffset dx="2" dy="4" result="offsetblur" /><feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs><path d="M100,80 L300,80 L320,280 L200,260 L80,280 Z" fill="${fill}" filter="url(#fabricShort)"/><path d="M100,80 L300,80 L298,110 L102,110 Z" fill="rgba(0,0,0,0.1)" /><path d="M110,80 L110,110 M130,80 L130,110 M150,80 L150,110 M170,80 L170,110 M190,80 L190,110 M210,80 L210,110 M230,80 L230,110 M250,80 L250,110 M270,80 L270,110 M290,80 L290,110" stroke="rgba(0,0,0,0.1)" stroke-width="1" /><path d="M200,110 L200,260" stroke="rgba(0,0,0,0.1)" stroke-width="2" /><g transform="translate(260, 240)"><rect x="-30" y="-15" width="40" height="2" fill="${textFill}" opacity="0.5" /><text x="0" y="0" text-anchor="middle" fill="${textFill}" font-family="Arial Black, sans-serif" font-weight="bold" font-size="16" transform="rotate(-5)" style="text-shadow: 1px 1px 0px rgba(0,0,0,0.2);">${config.text.toUpperCase()}</text></g></svg>`;
+            };
+
+            const handleTextChange = (e) => {
+                const newText = e.target.value.substring(0, 12);
+                setCustomizations(prev => ({
+                    ...prev,
+                    [selectedItem]: { ...prev[selectedItem], text: newText }
+                }));
+            };
+
+            const handleColorChange = (newColor) => {
+                setCustomizations(prev => ({
+                    ...prev,
+                    [selectedItem]: { ...prev[selectedItem], color: newColor }
+                }));
+            };
+
+            const handleAddToCart = async () => { // Hacemos la función asíncrona
+                if (isAdding || isAdded) return;
+
+                setIsAdding(true); // Inicia el estado de "añadiendo"
+
+                const productToAdd = {
+                    id: `custom-${selectedItem}-${Date.now()}`,
+                    name: `${currentConfig.name} Personalizado`,
+                    price: currentConfig.price,
+                    quantity: 1, // <-- AÑADIDO: Se establece la cantidad inicial
+                    img: 'custom_placeholder.png', // Placeholder inicial, se actualizará con la imagen generada
+                    category: 'Personalizado',
+                    size: size, // Incluimos la talla seleccionada
+                    customization: {
+                        text: currentConfig.text,
+                        color: getColorName(currentConfig.color)
+                    }
+                };
+
+                try {
+                    // 1. Capturar el SVG actual y convertirlo a imagen
+                    const svgElement = svgViewerRef.current.querySelector('svg');
+                    if (svgElement) {
+                        const serializer = new XMLSerializer();
+                        const svgString = serializer.serializeToString(svgElement);
+                        const svgDataURL = 'data:image/svg+xml;base64,' + btoa(svgString);
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 400; // Coincide con el viewBox del SVG
+                        canvas.height = 400;
+                        const ctx = canvas.getContext('2d');
+
+                        const img = new Image();
+                        img.src = svgDataURL;
+
+                        await new Promise((resolve) => {
+                            img.onload = () => {
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                resolve();
+                            };
+                            img.onerror = () => resolve(); // Resuelve incluso si hay error para no bloquear
+                        });
+
+                        productToAdd.img = canvas.toDataURL('image/png'); // Usar la imagen generada
+                    }
+                } catch (error) {
+                    console.error("Error al generar la imagen del SVG:", error);
+                }
+
+                addToCart(productToAdd);
+
+                // Cambia el estado para mostrar la confirmación
+                setIsAdding(false);
+                setIsAdded(true);
+                setTimeout(() => {
+                    setIsAdded(false); // Resetea el botón después de 2.5 segundos
+                }, 2500);
+            };
+
+            const downloadPDF = () => {
+                const svgElement = svgViewerRef.current.querySelector('svg');
+                if (!svgElement) return;
+
+                const serializer = new XMLSerializer();
+                const svgString = serializer.serializeToString(svgElement);
+                const svgDataURL = 'data:image/svg+xml;base64,' + btoa(svgString);
+
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const margin = 15;
+                const itemName = currentConfig.name;
+                const colorName = getColorName(currentConfig.color);
+                const colorHex = getColorHex(currentConfig.color);
+
+                doc.setFontSize(22);
+                doc.text(`Ficha de Personalización JKM SPORTS`, margin, margin);
+                doc.setFontSize(16);
+                doc.setTextColor(47, 79, 79);
+                doc.text(`Producto: ${itemName}`, margin, margin + 10);
+                doc.setFontSize(12);
+                doc.setTextColor(50, 50, 50);
+                doc.text(`Detalles de la Personalización:`, margin, margin + 25);
+                doc.text(`Prenda Seleccionada: ${itemName}`, margin, margin + 35);
+                doc.text(`Color Base: ${colorName} (${colorHex})`, margin, margin + 45);
+                doc.text(`Texto Personalizado: ${currentConfig.text.toUpperCase()}`, margin, margin + 55);
+                
+                const imgWidth = 100;
+                const imgHeight = 100;
+                const imgX = (210 - imgWidth) / 2;
+                const imgY = 90;
+                doc.addImage(svgDataURL, 'SVG', imgX, imgY, imgWidth, imgHeight);
+
+                doc.setFontSize(10);
+                doc.setTextColor(150, 150, 150);
+                doc.text('Nota: Esta ficha no es un comprobante de compra final.', margin, 280);
+                
+                doc.save(`JKM_Design_${itemName.replace(' ', '_')}.pdf`);
+            };
+
+            const renderSVG = () => {
+                switch (selectedItem) {
+                    case 'polo': return generatePoloSVG(currentConfig);
+                    case 'jacket': return generateJacketSVG(currentConfig);
+                    case 'short': return generateShortSVG(currentConfig);
+                    default: return '';
+                }
+            };
+
+            const getTextLocation = () => {
+                return selectedItem === 'short' ? 'Ubicación: Pierna Der.' : 'Ubicación: Pecho Izq. (Corazón)';
+            };
+
+            const handleSizeChange = (newSize) => {
+                setSize(newSize);
+            };
+
+            return (
+                <div className="pt-24 pb-12 fade-in">
+                    <main className="customizer-container">
+                        <div className="customizer-grid-2">
+                            <div className="viewer-sticky">
+                                <div className="viewer-card">
+                                    <div className="grid-background"></div>
+                                    <div 
+                                        ref={svgViewerRef}
+                                        className="svg-viewer"
+                                        dangerouslySetInnerHTML={{ __html: renderSVG() }}
+                                    />
+                                    <div className="flex items-center absolute" style={{ bottom: '1.5rem', gap: '0.5rem', fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                        <span className="flex items-center gap-1" dangerouslySetInnerHTML={{ __html: getIconSVG('RefreshCcw', 'customizer-icon-small') + 'Vista de Producto' }} />
+                                        <span>•</span>
+                                        <span>Premium Quality</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ paddingTop: '1rem', marginBottom: '2rem' }}>
+                                <div style={{ marginBottom: '2rem' }}>
+                                    <h2 className="controls-title text-3xl lg:text-5xl">
+                                        Personaliza <br /> tu equipación
+                                    </h2>
+                                    <p style={{ color: '#94a3b8', fontSize: '1.125rem' }}>Edición profesional y descarga de ficha.</p>
+                                </div>
+
+                                <div className="item-selector mb-4">
+                                    {Object.keys(items).map(key => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setSelectedItem(key)}
+                                            className={key === selectedItem ? 'selected' : ''}
+                                        >
+                                            <div dangerouslySetInnerHTML={{ __html: getIconSVG(items[key].iconName, 'customizer-icon') }} />
+                                            {items[key].name}
+                                        </button>
+                                    ))}
+                                </div>
+                                
+                                <div style={{ marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid #1e293b' }}>
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <div className="flex items-center" style={{ justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                            <label style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Nombre / Equipo</label>
+                                            <span className="text-limestone" style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{getTextLocation()}</span>
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            className="text-input"
+                                            value={currentConfig.text}
+                                            maxLength="12"
+                                            placeholder="TU TEXTO"
+                                            onChange={handleTextChange}
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <label style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '1rem' }}>Color Base</label>
+                                        <div className="color-selector">
+                                            {colors.map(c => {
+                                                const isSelected = c.class === currentConfig.color;
+                                                return (
+                                                    <button
+                                                        key={c.name}
+                                                        onClick={() => handleColorChange(c.class)}
+                                                        title={c.name}
+                                                        className={isSelected ? 'selected' : ''}
+                                                    >
+                                                        <div className="color-swatch" style={{ backgroundColor: c.hex }}></div>
+                                                        <div className="color-overlay"></div>
+                                                        {isSelected && <div className="color-check" dangerouslySetInnerHTML={{ __html: getIconSVG('Check', 'customizer-icon') }} />}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    <div className="size-selector">
+                                        <label className="size-label">Selecciona tu Talla</label>
+                                        <div className="size-buttons-container">
+                                            {['S', 'M', 'L', 'XL'].map(s => (
+                                                <button
+                                                    key={s}
+                                                    className={`size-button ${size === s ? 'active' : ''}`}
+                                                    onClick={() => handleSizeChange(s)}
+                                                >
+                                                    {s}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <button onClick={handleAddToCart} className={`action-button add-to-cart-btn add-to-cart-custom-button ${isAdding ? 'is-adding' : ''} ${isAdded ? 'is-added' : ''}`} disabled={isAdding || isAdded}>
+                                        <div className="button-content">
+                                            {isAdding && <span style={{ animation: 'pulse 1s infinite' }}>Procesando...</span>}
+                                            {isAdded && (
+                                                <>
+                                                    <div className="success-check-icon">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1rem', height: '1rem' }}><polyline points="20 6 9 17 4 12" /></svg>
+                                                    </div>
+                                                    <span>¡Añadido!</span>
+                                                </>
+                                            )}
+                                            {!isAdding && !isAdded && (
+                                                <>
+                                                    <span>Añadir al Pedido</span>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.125rem', height: '1.125rem' }}><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6zM3 6h18M16 10a4 4 0 00-8 0" /></svg>
+                                                </>
+                                            )}
+                                        </div>
+                                        {isAdding && (
+                                            <div className="loading-bar">
+                                                <div className="animate-progress"></div>
+                                            </div>
+                                        )}
+                                    </button>
+                                    <button onClick={downloadPDF} className="action-button download-pdf-button">
+                                        <div dangerouslySetInnerHTML={{ __html: getIconSVG('Download', 'customizer-icon') }} />
+                                        <span>Descargar Ficha PDF</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+
+                </div>
+            );
+        };
+
+                // 6. Vista Autenticación (Login/Register)
+        const Auth = ({ setUser, setView }) => {
+            const [isLogin, setIsLogin] = useState(true);
+            const [formData, setFormData] = useState({
+                fullName: '', username: '', password: '', email: '', phone: '', address: ''
+            });
+            const [error, setError] = useState('');
+
+            const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setError('');
+
+                if (!isLogin) {
+                    // Validaciones de Registro
+                    if (formData.password.length < 5) return setError("La contraseña debe tener al menos 5 caracteres.");
+                    if (!formData.fullName || !formData.username) return setError("Todos los campos son obligatorios.");
+                }
+
+                // Simular Login/Registro exitoso
+                setUser(formData);
+                setView('home'); // Redirigir al inicio tras login
+            };
+
+            return (
+                <div className="pt-24 pb-12 min-h-screen flex items-center justify-center px-4 fade-in">
+                    <div className="glass-panel w-full max-w-md p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-primary to-brand-secondary"></div>
+                        
+                        <h2 className="text-3xl font-bold text-center mb-2">{isLogin ? 'Bienvenido de nuevo' : 'Únete al equipo'}</h2>
+                        <p className="text-center text-gray-400 mb-8 text-sm">{isLogin ? 'Ingresa tus credenciales para continuar' : 'Crea tu cuenta para acceder a ofertas exclusivas'}</p>
+
+                        {error && <div className="bg-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm text-center">{error}</div>}
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {!isLogin && (
+                                <>
+                                    <div className="relative">
+                                        <i className="fa-solid fa-user absolute left-3 top-3 text-gray-500"></i>
+                                        <input type="text" name="fullName" placeholder="Nombre Completo" className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-10 pr-4 py-2 focus:border-brand-primary focus:outline-none text-white" onChange={handleChange} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <input type="email" name="email" placeholder="Correo" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:border-brand-primary focus:outline-none text-white" onChange={handleChange} />
+                                        <input type="tel" name="phone" placeholder="Teléfono" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:border-brand-primary focus:outline-none text-white" onChange={handleChange} />
+                                    </div>
+                                    <input type="text" name="address" placeholder="Dirección" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:border-brand-primary focus:outline-none text-white" onChange={handleChange} />
+                                </>
+                            )}
+                            
+                            <div className="relative">
+                                <i className="fa-solid fa-at absolute left-3 top-3 text-gray-500"></i>
+                                <input type="text" name="username" placeholder="Nombre de Usuario" required className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-10 pr-4 py-2 focus:border-brand-primary focus:outline-none text-white" onChange={handleChange} />
+                            </div>
+
+                            <div className="relative">
+                                <i className="fa-solid fa-lock absolute left-3 top-3 text-gray-500"></i>
+                                <input type="password" name="password" placeholder="Contraseña" required className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-10 pr-4 py-2 focus:border-brand-primary focus:outline-none text-white" onChange={handleChange} />
+                            </div>
+
+                            <button type="submit" className="w-full bg-brand-primary text-black font-bold py-3 rounded-lg hover:bg-lime-600 transition transform active:scale-95">
+                                {isLogin ? 'Iniciar Sesión' : 'Registrarse'}
+                            </button>
+                        </form>
+
+                        <div className="mt-6 text-center text-sm">
+                            <span className="text-gray-400">{isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}</span>
+                            <button onClick={() => setIsLogin(!isLogin)} className="ml-2 text-brand-secondary font-bold hover:underline">
+                                {isLogin ? 'Regístrate aquí' : 'Ingresa aquí'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 7. Vista Perfil Cliente
+        const Profile = ({ user }) => (
+            <div className="pt-24 pb-12 max-w-4xl mx-auto px-4 fade-in">
+                <div className="glass-panel rounded-2xl p-8 relative overflow-hidden">
+                     <div className="absolute top-0 right-0 p-8 opacity-10">
+                        <i className="fa-solid fa-id-card text-9xl"></i>
+                    </div>
+                    <h2 className="text-3xl font-bold mb-6">Mi Perfil</h2>
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="h-20 w-20 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full flex items-center justify-center text-3xl font-bold text-white">
+                                    {user.username.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold">{user.fullName || 'Usuario'}</h3>
+                                    <span className="bg-slate-700 px-3 py-1 rounded-full text-xs text-brand-primary">Miembro Premium</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="bg-slate-800/50 p-4 rounded-lg">
+                                <label className="text-xs text-gray-400 block">Usuario</label>
+                                <div className="font-mono">{user.username}</div>
+                            </div>
+                            <div className="bg-slate-800/50 p-4 rounded-lg">
+                                <label className="text-xs text-gray-400 block">Dirección de Envío</label>
+                                <div>{user.address || 'Sin dirección registrada'}</div>
+                            </div>
+                            <div className="bg-slate-800/50 p-4 rounded-lg">
+                                <label className="text-xs text-gray-400 block">Contacto</label>
+                                <div>{user.email || 'N/A'} • {user.phone || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // 8. Vista Contacto
+        const Contact = () => (
+            <div className="pt-24 pb-12 max-w-7xl mx-auto px-6 sm:px-4 fade-in">
+                <div className="grid lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h2 className="text-4xl font-extrabold text-white mb-4">Contáctanos</h2>
+                        <p className="text-gray-400 mb-8">Estamos aquí para ayudarte a encontrar el equipo perfecto para tu juego.</p>
+                        
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-brand-primary/20 rounded-full flex items-center justify-center text-brand-primary"><i className="fa-solid fa-location-dot"></i></div>
+                                <div><h4 className="font-bold">Ubicación</h4><p className="text-sm text-gray-400">Jr. Caraz N° 24, Huaraz</p></div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-brand-secondary/20 rounded-full flex items-center justify-center text-brand-secondary"><i className="fa-solid fa-envelope"></i></div>
+                                <div><h4 className="font-bold">Email</h4><p className="text-sm text-gray-400">jkm@tiendadeportiva.com</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    <form className="glass-panel p-8 rounded-2xl" onSubmit={(e) => {
+                        e.preventDefault();
+                        const name = e.target[0].value;
+                        const email = e.target[1].value;
+                        const message = e.target[2].value;
+                        const phoneNumber = '51946602545'; // WhatsApp number without '+'
+
+                        const whatsappMessage = `Hola, mi nombre es ${name}. Mi correo es ${email}. Mensaje: ${message}`;
+                        const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+                        
+                        window.open(whatsappURL, '_blank');
+                        alert('Redirigiendo a WhatsApp con tu mensaje.');
+                    }}>
+                        <div className="space-y-4">
+                            <input type="text" placeholder="Tu Nombre" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 focus:border-brand-primary focus:outline-none text-white" required />
+                            <input type="email" placeholder="Tu Correo" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 focus:border-brand-primary focus:outline-none text-white" required />
+                            <textarea rows="4" placeholder="¿Cómo podemos ayudarte?" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 focus:border-brand-primary focus:outline-none text-white" required></textarea>
+                            <button className="w-full bg-brand-primary text-black font-bold py-3 rounded-lg hover:bg-lime-600 transition">Enviar Mensaje</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        );
+
+        // 9. Footer
+        const Footer = ({ openImageModal }) => (
+            <footer className="bg-slate-900 border-t border-slate-800 pt-12 pb-8 mt-auto">
+                <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left mb-8">
+                    <div>
+                        <h3 className="text-xl font-bold text-white mb-4">Tienda Deportiva</h3>
+                        <p className="text-gray-400 text-sm">No sigas la jugada, <span className="text-brand-primary font-bold">¡CRÉALA!</span></p>
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-white mb-4">Políticas</h4>
+                        <ul className="space-y-2 text-sm text-gray-400">
+                            <li><button onClick={() => openImageModal('Politica de Atención al Cliente.jpeg')} className="hover:text-brand-primary transition">Atención al Cliente</button></li>
+                            <li><button onClick={() => openImageModal('Politicas de Cambios y Devoluciones.jpeg')} className="hover:text-brand-primary transition">Cambios y Devoluciones</button></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-white mb-4">Síguenos</h4>
+                        <div className="flex gap-4 justify-center md:justify-start">
+                            <a href="#" className="text-gray-400 hover:text-brand-primary text-xl"><i className="fa-brands fa-facebook"></i></a>
+                            <a href="#" className="text-gray-400 hover:text-brand-primary text-xl"><i className="fa-brands fa-instagram"></i></a>
+                            <a href="#" className="text-gray-400 hover:text-brand-primary text-xl"><i className="fa-brands fa-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div className="text-center text-gray-500 text-xs border-t border-slate-800 pt-8">
+                    © 2025 Tienda de Ropa Deportiva. Todos los derechos reservados.
+                </div>
+            </footer>
+        );
+
+        // 10. Vista Carrito
+        const Cart = ({ cart, setCart, setView }) => {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            const removeFromCart = (cartItemId) => {
+                setCart(cart.filter(item => item.cartItemId !== cartItemId));
+            };
+
+            return (
+                <div className="pt-24 pb-12 max-w-4xl mx-auto px-4 fade-in">
+                    <h2 className="text-3xl font-extrabold text-white mb-8">Mi Carrito</h2>
+                    {cart.length === 0 ? ( // Verifica si el carrito está vacío
+                        <div className="glass-panel p-8 rounded-xl text-center">
+                            <i className="fa-solid fa-cart-arrow-down text-5xl text-slate-500 mb-4"></i>
+                            <p className="text-gray-400">Tu carrito está vacío.</p>
+                            <button onClick={() => setView('catalog')} className="mt-6 bg-brand-primary text-black font-bold py-2 px-6 rounded-full hover:bg-lime-600 transition">
+                                Ir al Catálogo
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="glass-panel p-8 rounded-xl">
+                            <ul className="divide-y divide-slate-700">
+                                {cart.map(item => (
+                                    <li key={item.cartItemId} className="py-4 flex items-center justify-between"> {/* Usa cartItemId para la key */}
+                                        <div className="flex items-center gap-4">
+                                            <img 
+                                                src={item.img.startsWith('data:image') ? item.img : `Imagenes/${item.img}`} 
+                                                alt={item.name} 
+                                                className="h-16 w-16 object-contain bg-slate-800 rounded-md p-1" 
+                                            />
+                                            <div>
+                                                <h4 className="font-bold text-lg">{item.name}</h4>
+                                                <p className="text-sm text-gray-400">Cantidad: {item.quantity}</p>
+                                                {item.size && <p className="text-sm text-gray-400">Talla: <strong>{item.size}</strong></p>}
+                                                {item.customization && (
+                                                    <p className="text-xs text-gray-400 mt-1">Personalización: <span className="font-mono bg-slate-700 px-1 rounded">{item.customization.text}</span> ({item.customization.color})</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-lg">S/ {(item.price * item.quantity).toFixed(2)}</p>
+                                            <button onClick={() => removeFromCart(item.cartItemId)} className="text-red-400 hover:text-red-300 text-xs font-medium transition">
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className="mt-8 pt-4 border-t border-slate-700 flex justify-between items-center">
+                                <span className="text-xl font-bold">Total:</span>
+                                <span className="text-3xl font-extrabold text-brand-primary">S/ {total.toFixed(2)}</span>
+                            </div>
+                             <div className="mt-8 flex gap-4">
+                                <button onClick={() => setCart([])} className="w-full bg-red-500/20 text-red-400 hover:bg-red-500/30 font-bold py-3 rounded-lg transition">
+                                    Vaciar Carrito
+                                </button>
+                                <button onClick={() => setView('checkout')} className="w-full bg-brand-primary text-black font-bold py-3 rounded-lg hover:bg-lime-600 transition">
+                                    Proceder al Pago
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // NUEVA VISTA: Checkout
+        const Checkout = ({ cart, setCart, setView, user }) => {
+            const [step, setStep] = useState('selection'); // 'selection', 'payment', 'success'
+            const [paymentMethod, setPaymentMethod] = useState('card'); // 'card', 'yape'
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            const startWhatsAppFlow = () => {
+                const phoneNumber = "51946602545";
+                let message = `👋 *Hola! Quiero finalizar mi compra en TIENDA DEPORTIVA.*\n\n`;
+                message += "🛒 *Resumen del Pedido:*\n";
+                cart.forEach(item => {
+                    message += `- ${item.name} (x${item.quantity}) | Talla: ${item.size || 'N/A'}\n`;
+                    if (item.customization) {
+                        message += `  _Detalle: ${item.customization.text} (${item.customization.color})_\n`;
+                    }
+                });
+                message += `\n💰 *Total a Pagar: S/ ${total.toFixed(2)}*`;
+                if (user) {
+                    message += `\n\n👤 *Datos del Cliente:*\nNombre: ${user.fullName || user.username}\nDirección: ${user.address || 'No especificada'}`;
+                }
+                message += "\n\nQuedo atento para coordinar el pago y envío. ¡Gracias!";
+
+                const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+            };
+
+            const processPayment = (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = "Procesando...";
+                btn.disabled = true;
+
+                setTimeout(() => {
+                    setStep('success');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            };
+
+            const resetAndGoHome = () => {
+                setCart([]);
+                setView('home');
+            };
+
+            if (step === 'selection') {
+                return (
+                    <div className="fixed inset-0 bg-slate-900/90 z-50 flex items-center justify-center p-4 fade-in backdrop-blur-sm">
+                        <div className="glass-panel w-full max-w-md p-8 rounded-2xl shadow-2xl relative">
+                            <button onClick={() => setView('cart')} className="absolute top-4 right-4 text-slate-500 hover:text-white">&times;</button>
+                            <h2 className="text-center text-2xl font-bold mb-2">¿Cómo deseas finalizar?</h2>
+                            <p className="text-center text-gray-400 mb-8">Elige la opción que más te convenga.</p>
+
+                            <div onClick={startWhatsAppFlow} className="p-6 mb-4 bg-slate-800 hover:bg-slate-700 border-2 border-transparent hover:border-green-500 rounded-xl cursor-pointer transition-all flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-2xl">
+                                    <i className="fa-brands fa-whatsapp"></i>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold">Hablar con Asesor</h3>
+                                    <p className="text-gray-400 text-sm">Finalizar pedido vía WhatsApp.</p>
+                                </div>
+                            </div>
+
+                            <div onClick={() => setStep('payment')} className="p-6 bg-slate-800 hover:bg-slate-700 border-2 border-transparent hover:border-indigo-500 rounded-xl cursor-pointer transition-all flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-2xl">
+                                    <i className="fa-solid fa-credit-card"></i>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold">Pagar Ahora Online</h3>
+                                    <p className="text-gray-400 text-sm">Tarjeta de crédito/débito o Yape.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (step === 'payment') {
+                return (
+                    <div className="pt-24 pb-12 max-w-5xl mx-auto px-4 fade-in">
+                        <button onClick={() => setStep('selection')} className="text-gray-400 hover:text-white mb-6 flex items-center gap-2">
+                            <i className="fa-solid fa-arrow-left"></i> Volver a seleccionar
+                        </button>
+                        <div className="grid lg:grid-cols-3 gap-8">
+                            {/* Columna Izquierda: Métodos y Resumen */}
+                            <div className="lg:col-span-1 space-y-6">
+                                <div>
+                                    <h3 className="font-bold mb-3 text-lg">Método de Pago</h3>
+                                    <div className="space-y-2">
+                                        <button onClick={() => setPaymentMethod('card')} className={`w-full text-left p-3 rounded-lg border-2 flex items-center gap-3 transition ${paymentMethod === 'card' ? 'bg-slate-700 border-brand-primary' : 'bg-slate-800 border-slate-700 hover:bg-slate-700'}`}>
+                                            <i className="fa-solid fa-credit-card"></i> Tarjeta de Crédito/Débito
+                                        </button>
+                                        <button onClick={() => setPaymentMethod('yape')} className={`w-full text-left p-3 rounded-lg border-2 flex items-center gap-3 transition ${paymentMethod === 'yape' ? 'bg-slate-700 border-purple-400' : 'bg-slate-800 border-slate-700 hover:bg-slate-700'}`}>
+                                            <i className="fa-solid fa-mobile-screen"></i> Yape
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="glass-panel p-4 rounded-xl">
+                                    <h3 className="font-bold mb-3">Resumen</h3>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between text-gray-400"><span>Subtotal</span> <span>S/ {total.toFixed(2)}</span></div>
+                                        <div className="flex justify-between text-gray-400"><span>Envío</span> <span className="text-brand-primary font-bold">Gratis</span></div>
+                                        <div className="border-t border-slate-700 my-2"></div>
+                                        <div className="flex justify-between font-bold text-lg"><span>Total</span> <span>S/ {total.toFixed(2)}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Columna Derecha: Formularios */}
+                            <div className="lg:col-span-2 glass-panel p-8 rounded-2xl">
+                                {paymentMethod === 'card' && (
+                                    <form onSubmit={processPayment} className="fade-in">
+                                        <h3 className="text-xl font-bold mb-6">Datos de la Tarjeta</h3>
+                                        <div className="space-y-4">
+                                            <input type="text" placeholder="Nombre del Titular" required className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 focus:border-brand-primary focus:outline-none text-white" />
+                                            <input type="tel" inputMode="numeric" pattern="[0-9\s]{13,19}" autoComplete="cc-number" maxLength="19" placeholder="Número de Tarjeta" required className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 focus:border-brand-primary focus:outline-none text-white" />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <input type="text" placeholder="MM/AA" required className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 focus:border-brand-primary focus:outline-none text-white" />
+                                                <input type="text" placeholder="CVC" required className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 focus:border-brand-primary focus:outline-none text-white" />
+                                            </div>
+                                        </div>
+                                        <button type="submit" className="mt-8 w-full bg-brand-primary text-black font-bold py-3 rounded-lg hover:bg-lime-600 transition">
+                                            Pagar S/ {total.toFixed(2)}
+                                        </button>
+                                    </form>
+                                )}
+                                {paymentMethod === 'yape' && (
+                                    <div className="fade-in text-center">
+                                        <h3 className="text-xl font-bold mb-4">Pagar con Yape</h3>
+                                        <div className="bg-purple-600 p-6 rounded-2xl inline-block mb-6">
+                                            <div className="bg-white p-2 rounded-lg">
+                                                {/* Simulación de QR */}
+                                                <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect x="10" y="10" width="30" height="30" rx="4" fill="black" opacity="0.8"/>
+                                                    <rect x="60" y="10" width="30" height="30" rx="4" fill="black" opacity="0.8"/>
+                                                    <rect x="10" y="60" width="30" height="30" rx="4" fill="black" opacity="0.8"/>
+                                                    <rect x="50" y="50" width="10" height="10" fill="black"/>
+                                                    <rect x="70" y="70" width="10" height="10" fill="black"/>
+                                                    <rect x="60" y="80" width="10" height="10" fill="black"/>
+                                                    <rect x="80" y="60" width="10" height="10" fill="black"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <p>Yapea <strong className="text-brand-primary text-lg">S/ {total.toFixed(2)}</strong> al número:</p>
+                                        <p className="text-3xl font-bold tracking-widest my-2">946 602 545</p>
+                                        <p className="text-gray-400 text-sm mb-6">Tienda Deportiva SAC</p>
+                                        <form onSubmit={processPayment} className="max-w-sm mx-auto">
+                                            <input type="text" placeholder="Ingresa el código de operación" required className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 focus:border-purple-400 focus:outline-none text-white text-center" />
+                                            <button type="submit" className="mt-4 w-full bg-purple-500 text-white font-bold py-3 rounded-lg hover:bg-purple-600 transition">
+                                                Confirmar Yapeo
+                                            </button>
+                                        </form>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (step === 'success') {
+                return (
+                    <div className="pt-24 pb-12 text-center fade-in">
+                        <div className="w-24 h-24 bg-brand-primary rounded-full flex items-center justify-center text-5xl text-black mx-auto mb-6 shadow-lg shadow-lime-500/30">
+                            <i className="fa-solid fa-check"></i>
+                        </div>
+                        <h2 className="text-4xl font-extrabold mb-2">¡Pago Exitoso!</h2>
+                        <p className="text-gray-400 text-lg mb-8">Tu pedido ha sido procesado. Gracias por tu compra.</p>
+                        <button onClick={resetAndGoHome} className="bg-slate-700 hover:bg-slate-600 font-bold py-3 px-8 rounded-lg transition">
+                            Volver a la Tienda
+                        </button>
+                    </div>
+                );
+            }
+
+            return null; // Fallback
+        };
+
+        // 11. Modal de Imagen
+        const ImageModal = ({ src, onClose }) => (
+            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 fade-in">
+                <div className="relative max-w-4xl max-h-full">
+
+                    <img src={`Imagenes/${src}`} alt="Política de la tienda" className="object-contain max-w-full max-h-[90vh] rounded-lg shadow-2xl" />
+                    <button onClick={onClose} className="absolute -top-4 -right-4 h-10 w-10 bg-white text-black rounded-full flex items-center justify-center text-xl font-bold hover:bg-red-500 hover:text-white transition transform hover:scale-110">
+                        &times;
+                    </button>
+                </div>
+            </div>
+        );
+
+        // 12. Chatbot
+        const Chatbot = () => {
+            const [isOpen, setIsOpen] = useState(false);
+
+            return (
+                <div className="chatbot-container">
+                    {isOpen && (
+                        <div className="chatbot-window fade-in">
+                            <div className="chatbot-header flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-brand-secondary rounded-full flex items-center justify-center font-bold text-white">B</div>
+                                    <h3 className="font-bold text-lg">Bartolito</h3>
+                                </div>
+                                <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white">
+                                    <i className="fa-solid fa-times text-xl"></i>
+                                </button>
+                            </div>
+                            <iframe src="https://adriangomezmendez05.app.n8n.cloud/webhook/28a79696-5b5b-4f5f-842e-f1d53197b54b/chat" className="chatbot-iframe"></iframe>
+                        </div>
+                    )}
+                    <button onClick={() => setIsOpen(!isOpen)} className="chatbot-toggle-button">
+                        <i className={`fa-solid ${isOpen ? 'fa-times' : 'fa-robot'} text-2xl transition-transform duration-300`}></i>
+                    </button>
+                </div>
+            );
+        };
+
+        // --- COMPONENTE PRINCIPAL (APP) ---
+        const App = () => {
+            const [view, setView] = useState('home');
+            const [user, setUser] = useState(null);
+            const [cart, setCart] = useState([]);
+            const [toast, setToast] = useState(null);
+
+            const [modalImage, setModalImage] = useState(null);
+            const addToCart = (product) => { // Ahora acepta el objeto product completo
+                const isCustom = !!product.customization;
+                const existingItem = cart.find(item => 
+                    item.id === product.id && 
+                    item.size === product.size &&
+                    !isCustom // Solo agrupa si no es personalizado
+                );
+
+                const itemToAdd = { ...product, cartItemId: Date.now() }; // Asegura un ID único para cada item en el carrito
+                setCart(prevCart => [...prevCart, itemToAdd]);
+                setToast(`Agregado: ${itemToAdd.name}`);
+            };
+
+            const logout = () => {
+                setUser(null);
+                setView('home');
+                setToast("Sesión cerrada");
+            };
+
+            // Router simple
+            const renderView = () => {
+                switch(view) {
+                    case 'home': return <Home setView={setView} />;
+                    case 'catalog': return <Catalog addToCart={addToCart} />;
+                    case 'customize': return <Customize addToCart={addToCart} />;
+                    case 'auth': return <Auth setUser={setUser} setView={setView} />;
+                    case 'profile': return <Profile user={user} />;
+                    case 'contact': return <Contact />;
+                    case 'cart': return <Cart cart={cart} setCart={setCart} setView={setView} />;                    case 'checkout': return <Checkout cart={cart} setCart={setCart} setView={setView} user={user} />;
+                    default:
+                        console.error("Vista no reconocida:", view);
+                        return <Home setView={setView} />;
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    <Navbar setView={setView} cartCount={cart.length} user={user} logout={logout} />
+                    
+                    <main className="flex-grow bg-slate-900">
+                        {renderView()}
+                    </main>
+
+                    <Footer openImageModal={setModalImage} />
+
+                    {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+                    {modalImage && <ImageModal src={modalImage} onClose={() => setModalImage(null)} />}
+                    <Chatbot />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+
+</body>
+</html>
