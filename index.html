@@ -1300,7 +1300,6 @@
 
         // 5. Vista Personalización (Customize)
         const Customize = ({ addToCart }) => {
-            const { jsPDF } = window.jspdf;
             const svgViewerRef = useRef(null);
 
             // Definimos las tallas disponibles para los productos de ropa
@@ -1313,9 +1312,9 @@
             };
 
             const items = {
-                polo: { name: 'Chaqueta', iconName: 'TrendingUp' },
+                jacket: { name: 'Chaqueta', iconName: 'TrendingUp' },
                 short: { name: 'Shorts', iconName: 'Zap' },
-                jacket: { name: 'Polera', iconName: 'Trophy' }
+                polo: { name: 'Polera', iconName: 'Trophy' }
             };
 
             const colors = [
@@ -1327,7 +1326,7 @@
                 { name: 'Lima', class: 'bg-lime-400', hex: '#a3e635' },
             ];
 
-            const [selectedItem, setSelectedItem] = useState('polo');
+            const [selectedItem, setSelectedItem] = useState('jacket');
             const [customizations, setCustomizations] = useState(initialCustomizations);
             const [size, setSize] = useState('M');
             const [isAdding, setIsAdding] = useState(false); // Estado para la animación del botón
@@ -1458,6 +1457,7 @@
                 const svgString = serializer.serializeToString(svgElement);
                 const svgDataURL = 'data:image/svg+xml;base64,' + btoa(svgString);
 
+                const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
                 const margin = 15;
                 const itemName = currentConfig.name;
@@ -1491,8 +1491,8 @@
 
             const renderSVG = () => {
                 switch (selectedItem) {
-                    case 'polo': return generatePoloSVG(currentConfig);
                     case 'jacket': return generateJacketSVG(currentConfig);
+                    case 'polo': return generatePoloSVG(currentConfig);
                     case 'short': return generateShortSVG(currentConfig);
                     default: return '';
                 }
@@ -1899,17 +1899,17 @@
 
             const startWhatsAppFlow = () => {
                 const phoneNumber = "51946602545";
-                let message = `👋 *Hola! Quiero finalizar mi compra en TIENDA DEPORTIVA.*\n\n`;
-                message += "🛒 *Resumen del Pedido:*\n";
+                let message = `*Hola! Quiero finalizar mi compra en TIENDA DEPORTIVA.*\n\n`;
+                message += "*Resumen del Pedido:*\n";
                 cart.forEach(item => {
                     message += `- ${item.name} (x${item.quantity}) | Talla: ${item.size || 'N/A'}\n`;
                     if (item.customization) {
                         message += `  _Detalle: ${item.customization.text} (${item.customization.color})_\n`;
                     }
                 });
-                message += `\n💰 *Total a Pagar: S/ ${total.toFixed(2)}*`;
+                message += `\n*Total a Pagar: S/ ${total.toFixed(2)}*`;
                 if (user) {
-                    message += `\n\n👤 *Datos del Cliente:*\nNombre: ${user.fullName || user.username}\nDirección: ${user.address || 'No especificada'}`;
+                    message += `\n\n*Datos del Cliente:*\nNombre: ${user.fullName || user.username}\nDirección: ${user.address || 'No especificada'}`;
                 }
                 message += "\n\nQuedo atento para coordinar el pago y envío. ¡Gracias!";
 
@@ -2021,18 +2021,7 @@
                                     <div className="fade-in text-center">
                                         <h3 className="text-xl font-bold mb-4">Pagar con Yape</h3>
                                         <div className="bg-purple-600 p-6 rounded-2xl inline-block mb-6">
-                                            <div className="bg-white p-2 rounded-lg">
-                                                {/* Simulación de QR */}
-                                                <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <rect x="10" y="10" width="30" height="30" rx="4" fill="black" opacity="0.8"/>
-                                                    <rect x="60" y="10" width="30" height="30" rx="4" fill="black" opacity="0.8"/>
-                                                    <rect x="10" y="60" width="30" height="30" rx="4" fill="black" opacity="0.8"/>
-                                                    <rect x="50" y="50" width="10" height="10" fill="black"/>
-                                                    <rect x="70" y="70" width="10" height="10" fill="black"/>
-                                                    <rect x="60" y="80" width="10" height="10" fill="black"/>
-                                                    <rect x="80" y="60" width="10" height="10" fill="black"/>
-                                                </svg>
-                                            </div>
+                                            <img src="Imagenes/Yape.jpeg" alt="Código QR de Yape" className="rounded-lg" style={{ width: '150px', height: '150px' }} />
                                         </div>
                                         <p>Yapea <strong className="text-brand-primary text-lg">S/ {total.toFixed(2)}</strong> al número:</p>
                                         <p className="text-3xl font-bold tracking-widest my-2">946 602 545</p>
@@ -2119,15 +2108,23 @@
             const [modalImage, setModalImage] = useState(null);
             const addToCart = (product) => { // Ahora acepta el objeto product completo
                 const isCustom = !!product.customization;
-                const existingItem = cart.find(item => 
-                    item.id === product.id && 
-                    item.size === product.size &&
-                    !isCustom // Solo agrupa si no es personalizado
-                );
+                
+                setCart(prevCart => {
+                    const existingItemIndex = prevCart.findIndex(item => 
+                        item.id === product.id && 
+                        item.size === product.size &&
+                        !isCustom // Solo agrupa si no es personalizado
+                    );
 
-                const itemToAdd = { ...product, cartItemId: Date.now() }; // Asegura un ID único para cada item en el carrito
-                setCart(prevCart => [...prevCart, itemToAdd]);
-                setToast(`Agregado: ${itemToAdd.name}`);
+                    if (existingItemIndex >= 0) {
+                        const newCart = [...prevCart];
+                        newCart[existingItemIndex].quantity += product.quantity;
+                        return newCart;
+                    } else {
+                        return [...prevCart, { ...product, cartItemId: Date.now() }];
+                    }
+                });
+                setToast(`Agregado: ${product.name}`);
             };
 
             const logout = () => {
