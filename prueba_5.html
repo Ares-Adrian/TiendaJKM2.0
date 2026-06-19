@@ -5,26 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tienda de Ropa Deportiva - Créala</title>
     
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- Babel para JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.26.0/babel.min.js"></script>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Lucide React Icons CDN -->
-    <script src="https://unpkg.com/lucide-react@0.303.0/dist/umd/lucide-react.js"></script>
-
-    <!-- jsPDF para generar el PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- Configuración personalizada de Tailwind -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCnddHkzFsp9AknivpyEg1j-Y-VxNYy70k",
+        authDomain: "sportin-4c1b0.firebaseapp.com",
+        projectId: "sportin-4c1b0",
+        storageBucket: "sportin-4c1b0.firebasestorage.app",
+        messagingSenderId: "847101838454",
+        appId: "1:847101838454:web:97228c72c717a19c378b57"
+      };
+      firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    </script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -724,6 +731,72 @@
         50% { transform: scale(1.2); }
     }
 
+        /* Base y Tipografía */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        /* Utilidades y Comunes */
+        .container {
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 2rem 1rem;
+        }
+        .flex-row { display: flex; align-items: center; }
+        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 3rem; }
+        @media (min-width: 1024px) {
+            .grid-2 { grid-template-columns: 1.5fr 1fr; }
+        }
+        .text-limestone { color: #a3e635; } /* lime-400 */
+        .bg-limestone { background-color: #a3e635; } /* lime-400 */
+        .text-dark { color: #020617; } /* slate-950 */
+
+        /* Navbar */
+        #navbar {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(15, 23, 42, 0.9); /* slate-900/90 */
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            border-bottom: 1px solid #1e293b; /* slate-800 */
+        }
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -0.05em;
+            text-shadow: 2px 2px 0px rgba(163, 230, 53, 0.5);
+        }
+        #cart-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            transition: background-color 0.3s;
+            position: relative;
+        }
+        #cart-button:hover { background-color: #1e293b; }
+        #cart-count {
+            position: absolute;
+            top: -0.25rem;
+            right: -0.25rem;
+            background-color: #a3e635;
+            color: #020617;
+            font-size: 0.75rem;
+            font-weight: bold;
+            width: 1.25rem;
+            height: 1.25rem;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            box-shadow: 0 4px 6px rgba(163, 230, 53, 0.3);
+        }
+
     </style>
 </head>
 <body>
@@ -732,13 +805,40 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- DATOS ---
+        // --- DATOS ACTUALIZADOS ---
         const PRODUCTS = [
-            { id: 1, name: "Pelota de fútbol", price: 20.00, img: "Pelota.jpeg", category: "Accesorios" },
-            { id: 2, name: "Polera Deportiva Premium", price: 35.00, img: "Polera deportiva Premium.jpeg", category: "Ropa" },
-            { id: 3, name: "Shorts Premium", price: 25.00, img: "Shorts Deportivos Premium.jpeg", category: "Ropa" },
-            { id: 4, name: "Canillera Deportiva Premium", price: 25.00, img: "Canillera deportiva Premium.jpeg", category: "Accesorios" },
-            { id: 5, name: "Chaqueta Deportiva Premium", price: 40.00, img: "Chaqueta Deportiva Premium.jpeg", category: "Ropa" },
+            // DEPORTE (Los 5 originales)
+            { id: 1, name: "Pelota de fútbol", price: 20.00, img: "Pelota.jpeg", category: "Accesorios", mainCategory: "Deporte" },
+            { id: 2, name: "Polera Deportiva Premium", price: 35.00, img: "Polera deportiva Premium.jpeg", category: "Ropa", mainCategory: "Deporte" },
+            { id: 3, name: "Shorts Premium", price: 25.00, img: "Shorts Deportivos Premium.jpeg", category: "Ropa", mainCategory: "Deporte" },
+            { id: 4, name: "Canillera Deportiva Premium", price: 25.00, img: "Canillera deportiva Premium.jpeg", category: "Accesorios", mainCategory: "Deporte" },
+            { id: 5, name: "Chaqueta Deportiva Premium", price: 40.00, img: "Chaqueta Deportiva Premium.jpeg", category: "Ropa", mainCategory: "Deporte" },
+
+            // TREKKING
+            { id: 6, name: "Mochila de Trekking 30L", price: 60.00, img: "mochila_trekking.jpeg", category: "Equipamiento", mainCategory: "Trekking" },
+            { id: 7, name: "Bastones de Trekking Ajustables", price: 40.00, img: "bastones_trekking.jpeg", category: "Equipamiento", mainCategory: "Trekking" },
+            { id: 8, name: "Botella Térmica Deportiva", price: 25.00, img: "botella_termica.jpeg", category: "Accesorios", mainCategory: "Trekking" },
+            { id: 9, name: "Gorro de Protección UV", price: 20.00, img: "gorro_uv.jpeg", category: "Ropa", mainCategory: "Trekking" },
+            { id: 10, name: "Linterna Frontal LED", price: 35.00, img: "linterna_led.jpeg", category: "Accesorios", mainCategory: "Trekking" },
+
+            // CAMPING
+            { id: 11, name: "Carpa para 2 Personas", price: 150.00, img: "carpa_2p.jpeg", category: "Equipamiento", mainCategory: "Camping" },
+            { id: 12, name: "Saco de Dormir Térmico", price: 70.00, img: "saco_dormir.jpeg", category: "Equipamiento", mainCategory: "Camping" },
+            { id: 13, name: "Colchoneta Aislante Inflable", price: 50.00, img: "colchoneta.jpeg", category: "Equipamiento", mainCategory: "Camping" },
+            { id: 14, name: "Cocina Portátil de Camping", price: 60.00, img: "cocina_camping.jpeg", category: "Equipamiento", mainCategory: "Camping" },
+            { id: 15, name: "Mesa Plegable Compacta", price: 80.00, img: "mesa_plegable.jpeg", category: "Equipamiento", mainCategory: "Camping" },
+
+            // MUNDIAL
+            { id: 16, name: "Camiseta de Argentina Mundial", price: 50.00, img: "arg_mundial.jpeg", category: "Ropa", mainCategory: "Mundial" },
+            { id: 17, name: "Camiseta Brasil Mundial", price: 50.00, img: "bra_mundial.jpeg", category: "Ropa", mainCategory: "Mundial" },
+            { id: 18, name: "Camiseta Francia Mundial", price: 50.00, img: "fra_mundial.jpeg", category: "Ropa", mainCategory: "Mundial" },
+            { id: 19, name: "Camiseta Inglaterra Mundial", price: 50.00, img: "ing_mundial.jpeg", category: "Ropa", mainCategory: "Mundial" },
+            { id: 20, name: "Camiseta Alemania Mundial", price: 50.00, img: "ale_mundial.jpeg", category: "Ropa", mainCategory: "Mundial" },
+            { id: 21, name: "Camiseta España Mundial", price: 50.00, img: "esp_mundial.jpeg", category: "Ropa", mainCategory: "Mundial" },
+            { id: 22, name: "Camiseta Portugal Mundial", price: 50.00, img: "por_mundial.jpeg", category: "Ropa", mainCategory: "Mundial" },
+            { id: 23, name: "Camiseta México Mundial", price: 50.00, img: "mex_mundial.jpeg", category: "Ropa", mainCategory: "Mundial" },
+            { id: 24, name: "Camiseta Países Bajos Mundial", price: 50.00, img: "ned_mundial.jpeg", category: "Ropa", mainCategory: "Mundial" },
+            { id: 25, name: "Camiseta Estados Unidos Mundial", price: 50.00, img: "usa_mundial.jpeg", category: "Ropa", mainCategory: "Mundial" },
         ];
 
         // --- COMPONENTES ---
@@ -757,57 +857,101 @@
             );
         };
 
-        // 2. Navegación
-        const Navbar = ({ setView, cartCount, user, logout }) => (
-            <nav className="fixed top-0 w-full z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-700 shadow-lg">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
-                            <i className="fa-solid fa-bolt text-brand-primary text-2xl"></i>
-                            <span className="font-extrabold text-xl tracking-tighter">TIENDA <span className="text-brand-primary">DEPORTIVA</span></span>
-                        </div>
-                        <div className="hidden md:block">
-                            <div className="ml-10 flex items-baseline space-x-4">
-                                <button onClick={() => setView('home')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Inicio</button>
-                                <button onClick={() => setView('catalog')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Catálogo</button>
-                                <button onClick={() => setView('customize')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Personalizar</button>
-                                <button onClick={() => setView('contact')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Contacto</button>
+        // 2. Navegación (Modificada para incluir el menú Categoría)
+        const Navbar = ({ setView, cartCount, user, logout, setCurrentCategory }) => {
+            const [mobileCatOpen, setMobileCatOpen] = useState(false);
+            const categories = ['Deporte', 'Trekking', 'Camping', 'Mundial'];
+
+            const handleCategoryClick = (cat) => {
+                setCurrentCategory(cat);
+                setView('catalog');
+                setMobileCatOpen(false);
+            };
+
+            return (
+                <nav className="fixed top-0 w-full z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-700 shadow-lg">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center justify-between h-16">
+                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
+                                <i className="fa-solid fa-bolt text-brand-primary text-2xl"></i>
+                                <span className="font-extrabold text-xl tracking-tighter">TIENDA <span className="text-brand-primary">DEPORTIVA</span></span>
+                            </div>
+                            <div className="hidden md:block">
+                                <div className="ml-10 flex items-baseline space-x-4">
+                                    <button onClick={() => setView('home')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Inicio</button>
+                                    <button onClick={() => { setCurrentCategory('Todos'); setView('catalog'); }} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Catálogo</button>
+                                    
+                                    {/* Dropdown Categoría Desktop */}
+                                    <div className="relative group inline-block">
+                                        <button className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition flex items-center gap-1">
+                                            Categoría <i className="fa-solid fa-chevron-down text-[10px] ml-1"></i>
+                                        </button>
+                                        <div className="absolute left-0 mt-0 w-48 rounded-md shadow-lg bg-slate-800 ring-1 ring-black ring-opacity-5 hidden group-hover:block z-50 border border-slate-700">
+                                            <div className="py-1">
+                                                {categories.map(cat => (
+                                                    <button key={cat} onClick={() => handleCategoryClick(cat)} className="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-brand-primary w-full text-left transition">
+                                                        {cat}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button onClick={() => setView('customize')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Personalizar</button>
+                                    <button onClick={() => setView('contact')} className="hover:text-brand-primary px-3 py-2 rounded-md text-sm font-medium transition">Contacto</button>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button onClick={() => setView('cart')} className="relative group p-2">
+                                    <i className="fa-solid fa-cart-shopping text-xl group-hover:text-brand-primary transition"></i>
+                                    {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{cartCount}</span>}
+                                </button>
+                                {user ? (
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={() => setView('profile')} className="flex items-center gap-2 hover:bg-slate-800 px-3 py-1 rounded-full transition">
+                                            <div className="bg-brand-secondary h-8 w-8 rounded-full flex items-center justify-center font-bold">{user.username.charAt(0).toUpperCase()}</div>
+                                            <span className="text-sm font-medium hidden sm:block">{user.username}</span>
+                                        </button>
+                                        <button onClick={logout} className="text-slate-400 hover:text-white text-sm"><i className="fa-solid fa-right-from-bracket"></i></button>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => setView('auth')} className="bg-brand-primary hover:bg-lime-600 text-black px-4 py-2 rounded-full font-bold text-sm transition shadow-lg shadow-lime-500/20">
+                                        Ingresar
+                                    </button>
+                                )}
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => setView('cart')} className="relative group p-2">
-                                <i className="fa-solid fa-cart-shopping text-xl group-hover:text-brand-primary transition"></i>
-                                {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{cartCount}</span>}
+                    </div>
+                    {/* Menu Móvil */}
+                    <div className="md:hidden flex justify-around py-3 bg-slate-900/95 backdrop-blur-sm text-xs border-t border-slate-700 relative">
+                        <button onClick={() => setView('home')} className="flex flex-col items-center gap-1 text-slate-300 hover:text-brand-primary"><i className="fa-solid fa-house text-lg"></i>Inicio</button>
+                        <button onClick={() => { setCurrentCategory('Todos'); setView('catalog'); }} className="flex flex-col items-center gap-1 text-slate-300 hover:text-brand-primary"><i className="fa-solid fa-bag-shopping text-lg"></i>Catálogo</button>
+                        
+                        {/* Dropdown Categoría Mobile */}
+                        <div className="relative flex flex-col items-center">
+                            <button onClick={() => setMobileCatOpen(!mobileCatOpen)} className="flex flex-col items-center gap-1 text-slate-300 hover:text-brand-primary">
+                                <i className="fa-solid fa-layer-group text-lg"></i>Categoría
                             </button>
-                            {user ? (
-                                <div className="flex items-center gap-3">
-                                    <button onClick={() => setView('profile')} className="flex items-center gap-2 hover:bg-slate-800 px-3 py-1 rounded-full transition">
-                                        <div className="bg-brand-secondary h-8 w-8 rounded-full flex items-center justify-center font-bold">{user.username.charAt(0).toUpperCase()}</div>
-                                        <span className="text-sm font-medium hidden sm:block">{user.username}</span>
-                                    </button>
-                                    <button onClick={logout} className="text-slate-400 hover:text-white text-sm"><i className="fa-solid fa-right-from-bracket"></i></button>
+                            {mobileCatOpen && (
+                                <div className="absolute bottom-[110%] left-1/2 transform -translate-x-1/2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-2 w-36 flex flex-col z-50">
+                                    {categories.map(cat => (
+                                        <button key={cat} onClick={() => handleCategoryClick(cat)} className="px-4 py-3 text-sm text-gray-300 hover:bg-slate-700 hover:text-brand-primary text-center border-b border-slate-700 last:border-0">
+                                            {cat}
+                                        </button>
+                                    ))}
                                 </div>
-                            ) : (
-                                <button onClick={() => setView('auth')} className="bg-brand-primary hover:bg-lime-600 text-black px-4 py-2 rounded-full font-bold text-sm transition shadow-lg shadow-lime-500/20">
-                                    Ingresar
-                                </button>
                             )}
                         </div>
+
+                        <button onClick={() => setView('customize')} className="flex flex-col items-center gap-1 text-slate-300 hover:text-brand-primary"><i className="fa-solid fa-pen-ruler text-lg"></i>Crear</button>
+                        <button onClick={() => setView('cart')} className="flex flex-col items-center gap-1 relative text-slate-300 hover:text-brand-primary"><i className="fa-solid fa-cart-shopping text-lg"></i>Carrito {cartCount > 0 && <span className="absolute -top-1 right-2 bg-red-500 text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">{cartCount}</span>}</button>
                     </div>
-                </div>
-                {/* Mobile Menu (Simplified) */}
-                <div className="md:hidden flex justify-around py-3 bg-slate-900/95 backdrop-blur-sm text-xs border-t border-slate-700">
-                    <button onClick={() => setView('home')} className="flex flex-col items-center gap-1 text-slate-300"><i className="fa-solid fa-house text-lg"></i>Inicio</button>
-                    <button onClick={() => setView('catalog')} className="flex flex-col items-center gap-1 text-slate-300"><i className="fa-solid fa-bag-shopping text-lg"></i>Catálogo</button>
-                    <button onClick={() => setView('customize')} className="flex flex-col items-center gap-1 text-slate-300"><i className="fa-solid fa-pen-ruler text-lg"></i>Crear</button>
-                    <button onClick={() => setView('contact')} className="flex flex-col items-center gap-1 text-slate-300"><i className="fa-solid fa-envelope text-lg"></i>Contacto</button>
-                    <button onClick={() => setView('cart')} className="flex flex-col items-center gap-1 relative text-slate-300"><i className="fa-solid fa-cart-shopping text-lg"></i>Carrito {cartCount > 0 && <span className="absolute -top-1 right-2 bg-red-500 text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">{cartCount}</span>}</button>
-                </div>
-            </nav>
-        );
+                </nav>
+            );
+        };
 
         // 3. Vista Inicio
-        const Home = ({ setView }) => (
+        const Home = ({ setView, setCurrentCategory }) => (
             <div className="fade-in pt-16">
                 <div className="relative bg-slate-900 overflow-hidden">
                     <div className="max-w-7xl mx-auto">
@@ -826,7 +970,7 @@
                                     </p>
                                     <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                                         <div className="rounded-md shadow">
-                                            <button onClick={() => setView('catalog')} className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-black bg-brand-primary hover:bg-lime-600 md:py-4 md:text-lg transition">
+                                            <button onClick={() => { setCurrentCategory('Todos'); setView('catalog'); }} className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-black bg-brand-primary hover:bg-lime-600 md:py-4 md:text-lg transition">
                                                 Ver Catálogo
                                             </button>
                                         </div>
@@ -847,17 +991,25 @@
             </div>
         );
 
-        // 4. Vista Catálogo
-        const Catalog = ({ addToCart }) => (
-            <div className="pt-24 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 fade-in">
-                <h2 className="text-3xl font-extrabold text-white mb-8 border-l-4 border-brand-primary pl-4">Nuestros Productos</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {PRODUCTS.map(product => (
-                        <InteractiveProductCard key={product.id} product={product} addToCart={addToCart} />
-                    ))}
+        // 4. Vista Catálogo (Añadido filtrado por categoría)
+        const Catalog = ({ addToCart, currentCategory }) => {
+            const filteredProducts = currentCategory === 'Todos' 
+                ? PRODUCTS 
+                : PRODUCTS.filter(p => p.mainCategory === currentCategory);
+
+            return (
+                <div className="pt-24 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 fade-in">
+                    <h2 className="text-3xl font-extrabold text-white mb-8 border-l-4 border-brand-primary pl-4">
+                        {currentCategory === 'Todos' ? 'Nuestros Productos' : `Categoría: ${currentCategory}`}
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {filteredProducts.map(product => (
+                            <InteractiveProductCard key={product.id} product={product} addToCart={addToCart} />
+                        ))}
+                    </div>
                 </div>
-            </div>
-        );
+            );
+        };
 
         const SIZES = ['S', 'M', 'L', 'XL'];
 
@@ -871,11 +1023,8 @@
                 isFavorite: false,
             });
 
-            // Efecto para actualizar el botón de añadir al carrito y el precio en el texto
             useEffect(() => {
-                if (!state.isAdding && !state.isAdded) {
-                    // Lógica para actualizar estados derivados si fuera necesario
-                }
+                // Efectos adicionales si son necesarios
             }, [state.quantity, state.isAdding, state.isAdded]);
 
             const handleFavoriteToggle = () => {
@@ -900,10 +1049,10 @@
 
                 setTimeout(() => {
                     setState(prevState => ({ ...prevState, isAdding: false, isAdded: true }));
-                    addToCart({ ...product, quantity: state.quantity, size: state.size }); // Llamar a la función addToCart del App component
+                    addToCart({ ...product, quantity: state.quantity, size: state.size });
 
                     setTimeout(() => {
-                        setState(prevState => ({ ...prevState, isAdded: false, quantity: 1 })); // Resetear después de unos segundos
+                        setState(prevState => ({ ...prevState, isAdded: false, quantity: 1 }));
                     }, 2500);
                 }, 1500);
             };
@@ -919,13 +1068,13 @@
                             src={`Imagenes/${product.img}`}
                             alt={product.name}
                             className="product-image"
-                            onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/333333/ffffff?text=Error+Carga+Imagen'; }}
+                            onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/333333/ffffff?text=Imagen+Pendiente'; }}
                         />
                         <div className="image-overlay"></div>
 
                         <div className="badge">
                             <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-slate-900" style={{ width: '0.75rem', height: '0.75rem' }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-                            NUEVO DROP
+                            {product.mainCategory === 'Mundial' ? 'MUNDIAL' : 'NUEVO DROP'}
                         </div>
 
                         <button
@@ -949,22 +1098,25 @@
                             </div>
                         </div>
 
-                        <div className="size-selector">
-                            <label className="size-label">Selecciona tu Talla</label>
-                            <div className="size-buttons-container">
-                                {SIZES.map(s => (
-                                    <button
-                                        key={s}
-                                        className={`size-button ${state.size === s ? 'active' : ''}`}
-                                        onClick={() => handleSizeChange(s)}
-                                    >
-                                        {s}
-                                    </button>
-                                ))}
+                        {/* Mostrar Tallas solo si es ropa o equipamiento que lo requiera */}
+                        {['Ropa', 'Equipamiento'].includes(product.category) && (
+                            <div className="size-selector">
+                                <label className="size-label">Selecciona tu Talla</label>
+                                <div className="size-buttons-container">
+                                    {SIZES.map(s => (
+                                        <button
+                                            key={s}
+                                            className={`size-button ${state.size === s ? 'active' : ''}`}
+                                            onClick={() => handleSizeChange(s)}
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="action-group">
+                        <div className="action-group" style={{ marginTop: ['Ropa', 'Equipamiento'].includes(product.category) ? '0' : '1.5rem' }}>
                             <div className="quantity-input">
                                 <button onClick={() => handleQuantityChange(-1)} className="qty-button" disabled={state.quantity <= 1}>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1rem', height: '1rem' }}><line x1="5" y1="12" x2="19" y2="12" /></svg>
@@ -1007,13 +1159,12 @@
         const Customize = ({ addToCart }) => {
             const svgViewerRef = useRef(null);
 
-            // Definimos las tallas disponibles para los productos de ropa
             const SIZES = ['S', 'M', 'L', 'XL'];
 
             const initialCustomizations = {
-                polo: { text: 'TU MARCA', color: 'bg-slate-900', name: 'Polera Deportiva Premium', price: PRODUCTS.find(p => p.id === 2)?.price || 35.00 },
-                short: { text: 'SPORT', color: 'bg-gray-100', name: 'Shorts Deportivos Premium', price: PRODUCTS.find(p => p.id === 3)?.price || 25.00 },
-                jacket: { text: 'CAMPEÓN', color: 'bg-red-600', name: 'Chaqueta Deportiva Premium', price: PRODUCTS.find(p => p.id === 5)?.price || 40.00 }
+                polo: { text: 'TU MARCA', color: 'bg-slate-900', name: 'Polera Deportiva Premium', price: 35.00 },
+                short: { text: 'SPORT', color: 'bg-gray-100', name: 'Shorts Deportivos Premium', price: 25.00 },
+                jacket: { text: 'CAMPEÓN', color: 'bg-red-600', name: 'Chaqueta Deportiva Premium', price: 40.00 }
             };
 
             const items = {
@@ -1034,8 +1185,9 @@
             const [selectedItem, setSelectedItem] = useState('jacket');
             const [customizations, setCustomizations] = useState(initialCustomizations);
             const [size, setSize] = useState('M');
-            const [isAdding, setIsAdding] = useState(false); // Estado para la animación del botón
-            const [isAdded, setIsAdded] = useState(false);   // Estado para la animación del botón
+            const [quantity, setQuantity] = useState(1);
+            const [isAdding, setIsAdding] = useState(false); 
+            const [isAdded, setIsAdded] = useState(false);
 
             const currentConfig = customizations[selectedItem];
 
@@ -1095,19 +1247,23 @@
                 }));
             };
 
-            const handleAddToCart = async () => { // Hacemos la función asíncrona
-                if (isAdding || isAdded) return;
+            const handleQuantityChange = (delta) => {
+                setQuantity(prev => Math.max(1, prev + delta));
+            };
 
-                setIsAdding(true); // Inicia el estado de "añadiendo"
+            const handleAddToCart = async () => { 
+                if (isAdding || isAdded) return;
+                setIsAdding(true);
 
                 const productToAdd = {
                     id: `custom-${selectedItem}-${Date.now()}`,
+                    idBase: selectedItem,
                     name: `${currentConfig.name} Personalizado`,
                     price: currentConfig.price,
-                    quantity: 1, // <-- AÑADIDO: Se establece la cantidad inicial
-                    img: 'custom_placeholder.png', // Placeholder inicial, se actualizará con la imagen generada
+                    quantity: quantity, 
+                    img: 'custom_placeholder.png', 
                     category: 'Personalizado',
-                    size: size, // Incluimos la talla seleccionada
+                    size: size,
                     customization: {
                         text: currentConfig.text,
                         color: getColorName(currentConfig.color)
@@ -1115,7 +1271,6 @@
                 };
 
                 try {
-                    // 1. Capturar el SVG actual y convertirlo a imagen
                     const svgElement = svgViewerRef.current.querySelector('svg');
                     if (svgElement) {
                         const serializer = new XMLSerializer();
@@ -1123,7 +1278,7 @@
                         const svgDataURL = 'data:image/svg+xml;base64,' + btoa(svgString);
 
                         const canvas = document.createElement('canvas');
-                        canvas.width = 400; // Coincide con el viewBox del SVG
+                        canvas.width = 400;
                         canvas.height = 400;
                         const ctx = canvas.getContext('2d');
 
@@ -1135,10 +1290,10 @@
                                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                                 resolve();
                             };
-                            img.onerror = () => resolve(); // Resuelve incluso si hay error para no bloquear
+                            img.onerror = () => resolve(); 
                         });
 
-                        productToAdd.img = canvas.toDataURL('image/png'); // Usar la imagen generada
+                        productToAdd.img = canvas.toDataURL('image/png'); 
                     }
                 } catch (error) {
                     console.error("Error al generar la imagen del SVG:", error);
@@ -1146,11 +1301,10 @@
 
                 addToCart(productToAdd);
 
-                // Cambia el estado para mostrar la confirmación
                 setIsAdding(false);
                 setIsAdded(true);
                 setTimeout(() => {
-                    setIsAdded(false); // Resetea el botón después de 2.5 segundos
+                    setIsAdded(false); 
                 }, 2500);
             };
 
@@ -1304,7 +1458,23 @@
                                         </div>
                                     </div>
 
-                                    <button onClick={handleAddToCart} className={`action-button add-to-cart-btn add-to-cart-custom-button ${isAdding ? 'is-adding' : ''} ${isAdded ? 'is-added' : ''}`} disabled={isAdding || isAdded}>
+                                    <div className="flex gap-4 items-center mb-6">
+                                        <div className="quantity-input !w-1/3">
+                                            <button onClick={() => handleQuantityChange(-1)} className="qty-button" disabled={quantity <= 1}>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1rem', height: '1rem' }}><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                            </button>
+                                            <span className="quantity-display">{quantity}</span>
+                                            <button onClick={() => handleQuantityChange(1)} className="qty-button">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1rem', height: '1rem' }}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                            </button>
+                                        </div>
+                                        <div className="flex-1 text-right">
+                                            <span className="text-gray-400 text-sm block">Subtotal</span>
+                                            <span className="text-2xl font-bold text-brand-primary">S/ {(currentConfig.price * quantity).toFixed(2)}</span>
+                                        </div>
+                                    </div>
+
+                                    <button onClick={handleAddToCart} className={`action-button add-to-cart-btn add-to-cart-custom-button !mt-0 ${isAdding ? 'is-adding' : ''} ${isAdded ? 'is-added' : ''}`} disabled={isAdding || isAdded}>
                                         <div className="button-content">
                                             {isAdding && <span style={{ animation: 'pulse 1s infinite' }}>Procesando...</span>}
                                             {isAdded && (
@@ -1341,7 +1511,7 @@
             );
         };
 
-                // 6. Vista Autenticación (Login/Register)
+        // 6. Vista Autenticación (Login/Register)
         const Auth = ({ setUser, setView }) => {
             const [isLogin, setIsLogin] = useState(true);
             const [formData, setFormData] = useState({
@@ -1351,19 +1521,34 @@
 
             const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-            const handleSubmit = (e) => {
+            const handleSubmit = async (e) => { // <-- nota la palabra async
                 e.preventDefault();
                 setError('');
 
                 if (!isLogin) {
-                    // Validaciones de Registro
                     if (formData.password.length < 5) return setError("La contraseña debe tener al menos 5 caracteres.");
                     if (!formData.fullName || !formData.username) return setError("Todos los campos son obligatorios.");
+                    
+                    // --- NUEVO: GUARDAR EN FIREBASE ---
+                    try {
+                        await window.db.collection("usuarios").add({
+                            nombre: formData.fullName,
+                            usuario: formData.username,
+                            email: formData.email,
+                            telefono: formData.phone,
+                            direccion: formData.address,
+                            fechaRegistro: new Date()
+                        });
+                        alert("¡Usuario guardado en la base de datos de Firebase!");
+                    } catch (error) {
+                        console.error("Error en Firebase:", error);
+                        return setError("No se pudo conectar a la base de datos.");
+                    }
+                    // ----------------------------------
                 }
-
-                // Simular Login/Registro exitoso
+                
                 setUser(formData);
-                setView('home'); // Redirigir al inicio tras login
+                setView('home'); 
             };
 
             return (
@@ -1480,7 +1665,7 @@
                         const name = e.target[0].value;
                         const email = e.target[1].value;
                         const message = e.target[2].value;
-                        const phoneNumber = '51946602545'; // WhatsApp number without '+'
+                        const phoneNumber = '51946602545';
 
                         const whatsappMessage = `Hola, mi nombre es ${name}. Mi correo es ${email}. Mensaje: ${message}`;
                         const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
@@ -1540,7 +1725,7 @@
             return (
                 <div className="pt-24 pb-12 max-w-4xl mx-auto px-4 fade-in">
                     <h2 className="text-3xl font-extrabold text-white mb-8">Mi Carrito</h2>
-                    {cart.length === 0 ? ( // Verifica si el carrito está vacío
+                    {cart.length === 0 ? (
                         <div className="glass-panel p-8 rounded-xl text-center">
                             <i className="fa-solid fa-cart-arrow-down text-5xl text-slate-500 mb-4"></i>
                             <p className="text-gray-400">Tu carrito está vacío.</p>
@@ -1552,12 +1737,13 @@
                         <div className="glass-panel p-8 rounded-xl">
                             <ul className="divide-y divide-slate-700">
                                 {cart.map(item => (
-                                    <li key={item.cartItemId} className="py-4 flex items-center justify-between"> {/* Usa cartItemId para la key */}
+                                    <li key={item.cartItemId} className="py-4 flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <img 
                                                 src={item.img.startsWith('data:image') ? item.img : `Imagenes/${item.img}`} 
                                                 alt={item.name} 
-                                                className="h-16 w-16 object-contain bg-slate-800 rounded-md p-1" 
+                                                className="h-16 w-16 object-contain bg-slate-800 rounded-md p-1"
+                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100/333333/ffffff?text=X'; }}
                                             />
                                             <div>
                                                 <h4 className="font-bold text-lg">{item.name}</h4>
@@ -1595,10 +1781,10 @@
             );
         };
 
-        // NUEVA VISTA: Checkout
+        // Checkout
         const Checkout = ({ cart, setCart, setView, user }) => {
-            const [step, setStep] = useState('selection'); // 'selection', 'payment', 'success'
-            const [paymentMethod, setPaymentMethod] = useState('card'); // 'card', 'yape'
+            const [step, setStep] = useState('selection');
+            const [paymentMethod, setPaymentMethod] = useState('card');
 
             const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -1622,18 +1808,39 @@
                 window.open(url, '_blank');
             };
 
-            const processPayment = (e) => {
+            const processPayment = async (e) => { // <-- nota la palabra async
                 e.preventDefault();
                 const btn = e.target.querySelector('button[type="submit"]');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = "Procesando...";
                 btn.disabled = true;
 
-                setTimeout(() => {
+                try {
+                    // --- NUEVO: GUARDAR PEDIDO EN FIREBASE ---
+                    await window.db.collection("pedidos").add({
+                        cliente: user ? user.fullName : "Usuario no registrado",
+                        metodoPago: paymentMethod,
+                        total: total,
+                        productos: cart.map(item => ({
+                            nombre: item.name,
+                            cantidad: item.quantity,
+                            precio: item.price,
+                            talla: item.size || 'N/A'
+                        })),
+                        estado: "Pagado",
+                        fecha: new Date()
+                    });
+                    // -----------------------------------------
+
+                    // Tu código original continúa aquí
                     setStep('success');
+                } catch (error) {
+                    console.error("Error al guardar el pedido:", error);
+                    alert("Error al procesar el pedido en la base de datos.");
+                } finally {
                     btn.innerHTML = originalText;
                     btn.disabled = false;
-                }, 2000);
+                }
             };
 
             const resetAndGoHome = () => {
@@ -1680,7 +1887,6 @@
                             <i className="fa-solid fa-arrow-left"></i> Volver a seleccionar
                         </button>
                         <div className="grid lg:grid-cols-3 gap-8">
-                            {/* Columna Izquierda: Métodos y Resumen */}
                             <div className="lg:col-span-1 space-y-6">
                                 <div>
                                     <h3 className="font-bold mb-3 text-lg">Método de Pago</h3>
@@ -1704,7 +1910,6 @@
                                 </div>
                             </div>
 
-                            {/* Columna Derecha: Formularios */}
                             <div className="lg:col-span-2 glass-panel p-8 rounded-2xl">
                                 {paymentMethod === 'card' && (
                                     <form onSubmit={processPayment} className="fade-in">
@@ -1759,15 +1964,13 @@
                     </div>
                 );
             }
-
-            return null; // Fallback
+            return null;
         };
 
         // 11. Modal de Imagen
         const ImageModal = ({ src, onClose }) => (
             <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 fade-in">
                 <div className="relative max-w-4xl max-h-full">
-
                     <img src={`Imagenes/${src}`} alt="Política de la tienda" className="object-contain max-w-full max-h-[90vh] rounded-lg shadow-2xl" />
                     <button onClick={onClose} className="absolute -top-4 -right-4 h-10 w-10 bg-white text-black rounded-full flex items-center justify-center text-xl font-bold hover:bg-red-500 hover:text-white transition transform hover:scale-110">
                         &times;
@@ -1806,19 +2009,20 @@
         // --- COMPONENTE PRINCIPAL (APP) ---
         const App = () => {
             const [view, setView] = useState('home');
+            const [currentCategory, setCurrentCategory] = useState('Todos'); // Estado para el filtro actual de categoría
             const [user, setUser] = useState(null);
             const [cart, setCart] = useState([]);
             const [toast, setToast] = useState(null);
-
             const [modalImage, setModalImage] = useState(null);
-            const addToCart = (product) => { // Ahora acepta el objeto product completo
+
+            const addToCart = (product) => {
                 const isCustom = !!product.customization;
                 
                 setCart(prevCart => {
                     const existingItemIndex = prevCart.findIndex(item => 
                         item.id === product.id && 
                         item.size === product.size &&
-                        !isCustom // Solo agrupa si no es personalizado
+                        !isCustom 
                     );
 
                     if (existingItemIndex >= 0) {
@@ -1838,25 +2042,23 @@
                 setToast("Sesión cerrada");
             };
 
-            // Router simple
             const renderView = () => {
                 switch(view) {
-                    case 'home': return <Home setView={setView} />;
-                    case 'catalog': return <Catalog addToCart={addToCart} />;
+                    case 'home': return <Home setView={setView} setCurrentCategory={setCurrentCategory} />;
+                    case 'catalog': return <Catalog addToCart={addToCart} currentCategory={currentCategory} />;
                     case 'customize': return <Customize addToCart={addToCart} />;
                     case 'auth': return <Auth setUser={setUser} setView={setView} />;
                     case 'profile': return <Profile user={user} />;
                     case 'contact': return <Contact />;
-                    case 'cart': return <Cart cart={cart} setCart={setCart} setView={setView} />;                    case 'checkout': return <Checkout cart={cart} setCart={setCart} setView={setView} user={user} />;
-                    default:
-                        console.error("Vista no reconocida:", view);
-                        return <Home setView={setView} />;
+                    case 'cart': return <Cart cart={cart} setCart={setCart} setView={setView} />;                    
+                    case 'checkout': return <Checkout cart={cart} setCart={setCart} setView={setView} user={user} />;
+                    default: return <Home setView={setView} setCurrentCategory={setCurrentCategory} />;
                 }
             };
 
             return (
                 <div className="min-h-screen flex flex-col">
-                    <Navbar setView={setView} cartCount={cart.length} user={user} logout={logout} />
+                    <Navbar setView={setView} cartCount={cart.length} user={user} logout={logout} setCurrentCategory={setCurrentCategory} />
                     
                     <main className="flex-grow bg-slate-900">
                         {renderView()}
